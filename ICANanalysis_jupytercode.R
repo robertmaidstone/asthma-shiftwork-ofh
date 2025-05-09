@@ -19,10 +19,20 @@ data$Shift_work <- factor(data$Shift_work,levels=c("No shift work","Never/rarely
 data$Submission_year <- (data$submission_date |> strsplit("-") |> unlist())[(1:length(data$submission_date))*3-2]
 data$Age <- as.numeric(data$Submission_year)-as.numeric(data$birth_year) #change to be based on months/days as well as year??
 
+data$Pill <- data$gyn_contracept_methods_1_M #grepl? i guess females can be on multiple contraceptions, which ones involve exogenous oestragen?
+
 #missing data
 
 data <- data[(!is.na(data$Asthma2))|(!is.na(data$Shift_work))|(!is.na(data$Age)),]
 data <- data[!(data$Shift_work %in% c("Prefer not to answer","Do not know")),]
+
+###
+data <- data_a[data_a$Sex=="Female",]
+
+glm(data=data[(data$gyn_contracept_methods_1_M),],formula="Asthma2 ~ Shift_work + Age",family = binomial(link="logit")) -> mod1
+exp(cbind(coef(mod1)[2:4],confint.default(mod1,2:4))) -> OR
+OR <- round(OR,2)
+paste0(OR[,1]," (", OR[,2],"-",OR[,3],")") -> q1_cont
 
 ###
 
