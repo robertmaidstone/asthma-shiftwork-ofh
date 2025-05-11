@@ -57,11 +57,14 @@ plot_data %>%
 
 
 library(patchwork)
-p_sex + p_age
+p_sex + p_age + plot_layout(widths = c(2,5)) -> p1
+
+ggsave(filename="OurFutureHealth/OFH_AsthmaShiftwork/plots/ICANplot1.png",width=14,height=4)
 
 
 plot_data %>%
   filter(AnalysisID==8) %>%
+  filter(Sex!="No Pill") %>%
   ggplot(aes(y=OR,x=`Shift work`,colour=Sex)) + 
   geom_hline(aes(yintercept = 1), size = .25, linetype = "dashed") +
   geom_errorbar(aes(ymax = UCI, ymin = LCI), size = .5, width = .4,
@@ -111,3 +114,39 @@ plot_data %>%
   scale_x_discrete(limits = rev(levels(plot_data$`Shift work`))) -> p_timeonpill
 
 ###
+
+plot_data %>%
+  filter(AnalysisID%in%c(9)) %>%
+ ggplot(aes(y=OR,x=Sex)) + 
+  geom_hline(aes(yintercept = 1), size = .25, linetype = "dashed") +
+  geom_errorbar(aes(ymax = UCI, ymin = LCI), size = .5, width = .4,
+                position = position_dodge(width = pd_width)) +
+  geom_point(position = position_dodge(width = pd_width)) + 
+  theme_bw() +
+  theme(axis.title.y = element_blank(),legend.position="none")+
+  ylab("Odds Ratio") +
+  #ylim(c(.4,1.6)) +
+  coord_flip()+
+  scale_x_discrete(limits = rev(unlist(plot_data %>%
+                                         filter(AnalysisID%in%c(9)) %>% dplyr::select(Sex)))) -> p_cont
+
+
+plot_data %>%
+  filter(AnalysisID%in%c(10)) %>%
+  ggplot(aes(y=OR,x=Sex)) + 
+  geom_hline(aes(yintercept = 1), size = .25, linetype = "dashed") +
+  geom_errorbar(aes(ymax = UCI, ymin = LCI), size = .5, width = .4,
+                position = position_dodge(width = pd_width)) +
+  geom_point(position = position_dodge(width = pd_width)) + 
+  theme_bw() +
+  theme(axis.title.y = element_blank(),legend.position="none")+
+  ylab("Odds Ratio") +
+  #ylim(c(.4,1.6)) +
+  coord_flip()+
+  scale_x_discrete(limits = rev(unlist(plot_data %>%
+                                         filter(AnalysisID%in%c(10)) %>% dplyr::select(Sex)))) -> p_timeonpill_asthma
+
+library(patchwork)
+p_cont + p_timeonpill_asthma + p_pill +plot_layout(widths = c(2,2,2)) -> p1
+
+ggsave(filename="OurFutureHealth/OFH_AsthmaShiftwork/plots/ICANplot2.png",width=14,height=4)
