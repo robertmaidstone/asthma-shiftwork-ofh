@@ -105,7 +105,8 @@ plot_data_age %>% filter(X!="(Intercept)") %>%
                                       "Permanent night shift\nwork"))) %>%
   mutate(LCI=as.numeric(LCI)) %>%
   mutate(UCI=as.numeric(UCI)) %>%
-  mutate(OR=as.numeric(OR)) -> plot_data_age
+  mutate(OR=as.numeric(OR)) %>%
+  mutate(Sex=factor(Sex,levels=c("female","male"),labels=c("Female","Male")))-> plot_data_age
 
 plot_data_age %>%
   ggplot(aes(y=OR,x=`Shift work`,colour=Sex)) + 
@@ -115,7 +116,7 @@ plot_data_age %>%
   geom_point(position = position_dodge(width = pd_width)) + 
   theme_bw() +
   theme(axis.title.y = element_blank(),
-        legend.position=c(0.8, 0.85),
+        legend.position=c(0.95, 0.2),
         legend.background = element_blank())+
   ylab("Odds Ratio") +
   ylim(c(.3,2)) +
@@ -129,7 +130,8 @@ plot_data_age %>%
 
 #####
 
-plot_data_compill <- filter(plot_data,X.1%in%c("Compill True","Compill False","No contraception"))
+#plot_data_compill <- filter(plot_data,X.1%in%c("Compill True","Compill False","No contraception"))
+plot_data_compill <- filter(plot_data,X.1%in%c("Compill True","No contraception"))
 plot_data_compill %>% head
 
 day<-as.data.frame(cbind(cbind("Day workers",plot_data_compill$X.1 %>% unique),"1",NA,NA))
@@ -145,7 +147,8 @@ plot_data_compill %>% filter(X!="(Intercept)") %>%
                                       "Permanent night shift\nwork"))) %>%
   mutate(LCI=as.numeric(LCI)) %>%
   mutate(UCI=as.numeric(UCI)) %>%
-  mutate(OR=as.numeric(OR)) -> plot_data_compill
+  mutate(OR=as.numeric(OR)) %>%
+  mutate(Group=factor(Group,levels=c("No contraception","Compill True"),labels = c("No contraception","Combined Pill"))) -> plot_data_compill
 
 plot_data_compill %>%
   ggplot(aes(y=OR,x=`Shift work`,colour=Group)) + 
@@ -244,5 +247,34 @@ plot_data_swtime %>%
     #values = c("transparent","transparent","black"),
     values = c(cbPalette[c(2,3)],"black"),
     name = element_blank(),guide = guide_legend(reverse=TRUE)) +
-  facet_grid(~Quantile)-> p_age
+  facet_grid(~Quantile)-> p_swtime
 
+###
+
+read.csv("~/OurFutureHealth/OFH_AsthmaShiftwork/data/contraception.csv") -> plot_data_cont
+
+plot_data_cont %>% 
+  .[,1:4] %>%
+  mutate(LCI=as.numeric(LCI)) %>%
+  mutate(UCI=as.numeric(UCI)) %>%
+  mutate(OR=as.numeric(OR)) %>%
+  mutate(Contraception=factor(Contraception, levels=plot_data_cont$Contraception,ordered=T))-> plot_data_cont
+
+plot_data_cont %>%
+  ggplot(aes(y=OR,x=Contraception)) + 
+  geom_hline(aes(yintercept = 1), size = .25, linetype = "dashed") +
+  geom_errorbar(aes(ymax = UCI, ymin = LCI), size = .5, width = .4,
+                position = position_dodge(width = pd_width)) +
+  geom_point(position = position_dodge(width = pd_width)) + 
+  theme_bw() +
+  theme(axis.title.y = element_blank(),
+        legend.position=c(0.8, 0.85),
+        legend.background = element_blank())+
+  ylab("Odds Ratio") +
+  ylim(c(.75,1.5)) +
+  coord_flip() +
+  scale_x_discrete(limits = rev(levels(plot_data_cont$Contraception)))+
+  scale_colour_manual(#values = cbPalette[2:4],
+    #values = c("transparent","transparent","black"),
+    values = c(cbPalette[c(2,3)],"black"),
+    name = element_blank(),guide = guide_legend(reverse=TRUE)) -> p_cont
