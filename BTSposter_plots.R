@@ -16,6 +16,7 @@ plot_data_sex %>% filter(X!="(Intercept)") %>%
                                          labels=c("Day workers (referent)","Shift work, but never or\nrarely night shifts",
                                                   "Irregular shift work\nincluding nights",
                                                   "Permanent night shift\nwork"))) %>%
+  mutate(Sex=factor(Sex,levels=c("Female3","Male3"),labels=c("Female","Male"))) %>%
   mutate(LCI=as.numeric(LCI)) %>%
   mutate(UCI=as.numeric(UCI)) %>%
   mutate(OR=as.numeric(OR)) -> plot_data_sex
@@ -31,7 +32,7 @@ plot_data_sex %>%
   geom_point(position = position_dodge(width = pd_width)) + 
   theme_bw() +
   theme(axis.title.y = element_blank(),
-        legend.position=c(0.8, 0.85),
+        legend.position=c(0.8, 0.25),
         legend.background = element_blank())+
   ylab("Odds Ratio") +
   ylim(c(.6,1.5)) +
@@ -89,10 +90,10 @@ plot_data_age1 %>%
   geom_point(position = position_dodge(width = pd_width)) + 
   theme_bw() +
   theme(axis.title.y = element_blank(),
-        legend.position=c(0.95, 0.2),
+        legend.position=c(0.8, 0.85),
         legend.background = element_blank())+
   ylab("Odds Ratio") +
-  ylim(c(.3,2)) +
+  ylim(c(.6,1.5)) +
   coord_flip() +
   scale_x_discrete(limits = rev(levels(plot_data$`Shift work`)))+
   scale_colour_manual(#values = cbPalette[2:4],
@@ -122,7 +123,8 @@ plot_data_age %>% filter(X!="(Intercept)") %>%
   mutate(LCI=as.numeric(LCI)) %>%
   mutate(UCI=as.numeric(UCI)) %>%
   mutate(OR=as.numeric(OR)) %>%
-  mutate(Sex=factor(Sex,levels=c("female","male"),labels=c("Female","Male")))-> plot_data_age
+  mutate(Sex=factor(Sex,levels=c("female","male"),labels=c("Female","Male")))%>%
+  mutate(Quantile=factor(Quantile,levels=c("q1","q2","q3","q4"),labels=c("18-29","30-44","45-59","60+")))-> plot_data_age
 
 plot_data_age %>%
   ggplot(aes(y=OR,x=`Shift work`,colour=Sex)) + 
@@ -135,7 +137,7 @@ plot_data_age %>%
         legend.position=c(0.95, 0.2),
         legend.background = element_blank())+
   ylab("Odds Ratio") +
-  ylim(c(.3,2)) +
+  ylim(c(.5,2.5)) +
   coord_flip() +
   scale_x_discrete(limits = rev(levels(plot_data$`Shift work`)))+
   scale_colour_manual(#values = cbPalette[2:4],
@@ -177,7 +179,7 @@ plot_data_compill %>%
   geom_point(position = position_dodge(width = pd_width)) + 
   theme_bw() +
   theme(axis.title.y = element_blank(),
-        legend.position=c(0.8, 0.85),
+        legend.position=c(0.8, 0.15),
         legend.background = element_blank())+
   ylab("Odds Ratio") +
   ylim(c(.8,2)) +
@@ -260,7 +262,7 @@ plot_data_men %>%
   geom_point(position = position_dodge(width = pd_width)) + 
   theme_bw() +
   theme(axis.title.y = element_blank(),
-        legend.position=c(0.8, 0.85),
+        legend.position=c(0.8, 0.15),
         legend.background = element_blank())+
   ylab("Odds Ratio") +
   ylim(c(.5,3)) +
@@ -302,7 +304,7 @@ plot_data_men %>%
   geom_point(position = position_dodge(width = pd_width)) + 
   theme_bw() +
   theme(axis.title.y = element_blank(),
-        legend.position=c(0.8, 0.85),
+        legend.position=c(0.8, 0.15),
         legend.background = element_blank())+
   ylab("Odds Ratio") +
   ylim(c(.5,3)) +
