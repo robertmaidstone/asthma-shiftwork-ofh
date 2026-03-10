@@ -47,20 +47,23 @@ ggsave(plot = p_sex, filename="OurFutureHealth/OFH_AsthmaShiftwork/plots/BTS_V2.
 
 # Create the data frame
 age_data <- data.frame(
-  AgeGroup = c("18–29", "30–44", "45–59", "60+"),
-  Count = c(70138, 252412, 290335, 115608)
-  Sex = c("Male","Male","Male","Female","Female","Female")
+  AgeGroup = c("18–29", "30–44", "45–59", "60+","18–29", "30–44", "45–59", "60+"),
+  Count = c(27176, 112365, 133287, 62617,48784,157904,177407,61067),
+  Sex = c("Male","Male","Male","Male","Female","Female","Female","Female")
 )
 
+library(scales)
+
 # Create the bar chart
-ggplot(age_data, aes(x = AgeGroup, y = Count)) +
-  geom_bar(stat = "identity", fill = "darkgrey") +
+ggplot(age_data, aes(x = AgeGroup, y = Count,fill=Sex)) +
+  geom_bar(stat = "identity",position="dodge",alpha=.5,colour="black") +
   scale_y_continuous(labels = label_comma()) +
   labs(
        y = "Count") +
+  scale_fill_manual(values=c("red","black"))+
   theme_bw() -> p_bar
 
-ggsave(plot = p_bar, filename="OurFutureHealth/OFH_AsthmaShiftwork/plots/BTS_bar.png",width=5,height=4)
+ggsave(plot = p_bar, filename="OurFutureHealth/OFH_AsthmaShiftwork/plots/BTS_bar_V2.png",width=5,height=4)
 
 #read.csv("~/OurFutureHealth/OFH_AsthmaShiftwork/data/OddsRatios.csv") -> plot_data
 
@@ -91,7 +94,7 @@ plot_data_age1 %>%
   geom_point(position = position_dodge(width = pd_width)) + 
   theme_bw() +
   theme(axis.title.y = element_blank(),
-        legend.position=c(0.8, 0.85),
+        legend.position=c(0.15, 0.85),
         legend.background = element_blank())+
   ylab("Odds Ratio") +
   ylim(c(.6,1.5)) +
@@ -102,7 +105,7 @@ plot_data_age1 %>%
     values = c(cbPalette[c(2,3)],"black"),
     name = element_blank(),guide = guide_legend(reverse=TRUE)) -> p_age1
 
-ggsave(plot = p_age1, filename="OurFutureHealth/OFH_AsthmaShiftwork/plots/BTS_age.png",width=5,height=4)
+ggsave(plot = p_age1, filename="OurFutureHealth/OFH_AsthmaShiftwork/plots/BTS_age_V2.png",width=5,height=4)
 
 #####
 plot_data_age <- filter(plot_data,X.1%in%c("Age q1 female","Age q2 female","Age q3 female","Age q4 female","Age q5 female",
