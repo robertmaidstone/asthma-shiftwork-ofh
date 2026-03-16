@@ -1,9 +1,7 @@
 SD_table_function <- function(data, vars, rd = 1) {
-  
   # Filter out unwanted JiNS_o values
   data <- data %>% 
     filter(!(Shift_work %in% c(NA, "Do not know", "Prefer not to answer")))
-  
   # Helper functions
   summarise_numeric <- function(x) {
     tibble(
@@ -16,10 +14,7 @@ SD_table_function <- function(data, vars, rd = 1) {
       )
     )
   }
-  
-  
   summarise_categorical <- function(x) {
-    
     # Logical: only TRUE percentage
     if (is.logical(x)) {
       pct_true <- round(100 * sum(x, na.rm = TRUE) / sum(!is.na(x)), rd)
@@ -30,7 +25,6 @@ SD_table_function <- function(data, vars, rd = 1) {
         )
       )
     }
-    
     # Multi-level categorical
     tab <- table(x, useNA = "no")
     pct <- round(100 * tab / sum(tab), rd)
@@ -40,14 +34,9 @@ SD_table_function <- function(data, vars, rd = 1) {
       value = as.character(pct)
     )
   }
-  
-  
-  
   # Loop over variables and summarise
   summaries <- lapply(vars, function(v) {
-    
     x <- data[[v]]
-    
     out <- data %>%
       group_by(Shift_work) %>%
       summarise(tmp = list(
@@ -63,8 +52,39 @@ SD_table_function <- function(data, vars, rd = 1) {
       pivot_wider(names_from = "Shift_work",values_from = "value")
     out
   })
-  
-  
   return(bind_rows(summaries))
-  
 }
+
+
+# or table function -----------------------------------------------------
+
+or_table_df <- function(data, formula, subset = NULL, digits = 2) {
+  # Apply subset if provided
+  if (!is.null(subset)) {
+    data <- data[subset, ]
+  }
+  # Fit logistic regression
+  mod <- glm(formula = formula,
+             data = data,
+             family = binomial(link = "logit"))
+  # Extract coefficients and Wald CIs
+  coefs <- coef(mod)
+  ci    <- confint.default(mod)
+  # Exponentiate
+  OR  <- exp(coefs)
+  LCL <- exp(ci[,1])
+  UCL <- exp(ci[,2])
+  # Build data frame
+  out <- data.frame(
+    term = names(coefs),
+    OR   = round(OR, digits),
+    LCL  = round(LCL, digits),
+    UCL  = round(UCL, digits),
+    stringsAsFactors = FALSE
+  )
+  # Add formatted column
+  out$formatted <- paste0(out$OR, " (", out$LCL, "–", out$UCL, ")")
+  return(out)
+}
+
+
