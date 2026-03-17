@@ -1,7 +1,9 @@
-SD_table_function <- function(data, vars, rd = 1) {
-  # Filter out unwanted JiNS_o values
-  data <- data %>% 
-    filter(!(Shift_work %in% c(NA, "Do not know", "Prefer not to answer")))
+SD_table_function <- function(data, vars, by, rd = 1) {
+  # Convert grouping variable to tidy-eval symbol
+  by_var <- rlang::ensym(by)
+  #Filter out unwanted values *only for the grouping variable*
+  data <- data %>%
+    filter(!(!!by_var %in% c(NA, "Do not know", "Prefer not to answer")))
   # Helper functions
   summarise_numeric <- function(x) {
     tibble(
@@ -15,20 +17,12 @@ SD_table_function <- function(data, vars, rd = 1) {
     )
   }
   summarise_categorical <- function(x) {
-    # Logical: only TRUE percentage
     if (is.logical(x)) {
       pct_true <- round(100 * sum(x, na.rm = TRUE) / sum(!is.na(x)), rd)
-      return(
-        tibble(
-          level = "TRUE",
-          value = as.character(pct_true)
-        )
-      )
+      return(tibble(level = "TRUE", value = as.character(pct_true)))
     }
-    # Multi-level categorical
     tab <- table(x, useNA = "no")
     pct <- round(100 * tab / sum(tab), rd)
-    
     tibble(
       level = names(pct),
       value = as.character(pct)
@@ -38,7 +32,7 @@ SD_table_function <- function(data, vars, rd = 1) {
   summaries <- lapply(vars, function(v) {
     x <- data[[v]]
     out <- data %>%
-      group_by(Shift_work) %>%
+      group_by(!!by_var) %>%
       summarise(tmp = list(
         if (is.numeric(x)) {
           summarise_numeric(.data[[v]])
@@ -48,13 +42,13 @@ SD_table_function <- function(data, vars, rd = 1) {
       )) %>%
       tidyr::unnest(tmp) %>%
       mutate(variable = v) %>%
-      dplyr::select(variable,level,everything()) %>%
-      pivot_wider(names_from = "Shift_work",values_from = "value")
+      select(variable, level, everything()) %>%
+      pivot_wider(names_from = !!by_var, values_from = value)
+    
     out
   })
-  return(bind_rows(summaries))
+  bind_rows(summaries)
 }
-
 
 # or table function -----------------------------------------------------
 
