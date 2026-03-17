@@ -120,3 +120,27 @@ or_table_df <- function(data, formula, subset = NULL, digits = 2) {
 }
 
 
+
+# plot OR_table_df output -------------------------------------------------
+
+plot_or <- function(or_table_1,or_table_2,names){
+  
+  plot_data_sex %>%
+    ggplot(aes(y=OR,x=`Shift work`,colour=Sex)) + 
+    geom_hline(aes(yintercept = 1), size = .25, linetype = "dashed") +
+    geom_errorbar(aes(ymax = UCI, ymin = LCI), size = .5, width = .4,
+                  position = position_dodge(width = pd_width)) +
+    geom_point(position = position_dodge(width = pd_width)) + 
+    theme_bw() +
+    theme(axis.title.y = element_blank(),
+          legend.position=c(0.8, 0.25),
+          legend.background = element_blank())+
+    ylab("Odds Ratio") +
+    ylim(c(.6,1.5)) +
+    coord_flip() +
+    scale_x_discrete(limits = rev(levels(plot_data$`Shift work`)))+
+    scale_colour_manual(#values = cbPalette[2:4],
+      #values = c("transparent","transparent","black"),
+      values = c(cbPalette[c(2,3)],"black"),
+      name = element_blank(),guide = guide_legend(reverse=TRUE))-> p_sex
+}
