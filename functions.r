@@ -1,10 +1,12 @@
-SD_table_function <- function(data, vars, by, rd = 1) {
-  # Convert grouping variable to tidy-eval symbol
+SD_table_function <- function(data, vars, by, rd = 1, include_missing = FALSE) {
+  # Tidy-eval for grouping variable
   by_var <- rlang::ensym(by)
-  #Filter out unwanted values *only for the grouping variable*
+  
+  # Filter out unwanted values only for the grouping variable
   data <- data %>%
     filter(!(!!by_var %in% c(NA, "Do not know", "Prefer not to answer")))
-  # Helper functions
+  
+  # Helper: numeric summary
   summarise_numeric <- function(x) {
     tibble(
       level = "mean_sd",
@@ -16,22 +18,37 @@ SD_table_function <- function(data, vars, by, rd = 1) {
       )
     )
   }
+  
+  # Helper: categorical summary
   summarise_categorical <- function(x) {
     if (is.logical(x)) {
       pct_true <- round(100 * sum(x, na.rm = TRUE) / sum(!is.na(x)), rd)
       return(tibble(level = "TRUE", value = as.character(pct_true)))
     }
+    
     tab <- table(x, useNA = "no")
     pct <- round(100 * tab / sum(tab), rd)
+    
     tibble(
       level = names(pct),
       value = as.character(pct)
     )
   }
-  # Loop over variables and summarise
+  
+  # Helper: missingness summary
+  summarise_missing <- function(x) {
+    tibble(
+      level = "Missing",
+      value = as.character(round(100 * mean(is.na(x)), rd))
+    )
+  }
+  
+  # Loop over variables
   summaries <- lapply(vars, function(v) {
     x <- data[[v]]
-    out <- data %>%
+    
+    # Base summary (numeric or categorical)
+    base_summary <- data %>%
       group_by(!!by_var) %>%
       summarise(tmp = list(
         if (is.numeric(x)) {
@@ -40,13 +57,34 @@ SD_table_function <- function(data, vars, by, rd = 1) {
           summarise_categorical(.data[[v]])
         }
       )) %>%
-      tidyr::unnest(tmp) %>%
+      tidyr::unnest(tmp)
+    
+    # Add missingness if requested
+    if (include_missing) {
+      miss_df <- data %>%
+        group_by(!!by_var) %>%
+        summarise(tmp = list(summarise_missing(.data[[v]]))) %>%
+        tidyr::unnest(tmp)
+      
+      base_summary <- bind_rows(base_summary, miss_df)
+    }
+    
+    # Add counts per group
+    counts_df <- data %>%
+      group_by(!!by_var) %>%
+      summarise(n = n()) %>%
+      mutate(level = "n", value = as.character(n)) %>%
+      select(-n)
+    
+    # Combine counts + summaries
+    out <- bind_rows(counts_df, base_summary) %>%
       mutate(variable = v) %>%
       select(variable, level, everything()) %>%
       pivot_wider(names_from = !!by_var, values_from = value)
     
     out
   })
+  
   bind_rows(summaries)
 }
 
