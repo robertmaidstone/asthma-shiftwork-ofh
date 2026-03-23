@@ -6,6 +6,13 @@ SD_table_function <- function(data, vars, by, rd = 1, include_missing = FALSE) {
   data <- data %>%
     filter(!(!!by_var %in% c(NA, "Do not know", "Prefer not to answer")))
   
+  n_table <- data %>%
+    group_by(!!by_var) %>%
+    summarise(n = n()) %>%
+    mutate(variable = "n", level = "") %>%
+    select(variable, level, everything()) %>%
+    pivot_wider(names_from = !!by_var, values_from = n)
+  
   # Helper: numeric summary
   summarise_numeric <- function(x) {
     tibble(
@@ -38,7 +45,7 @@ SD_table_function <- function(data, vars, by, rd = 1, include_missing = FALSE) {
   # Helper: missingness summary
   summarise_missing <- function(x) {
     tibble(
-      level = "Missing",
+      level = "Missing (%)",
       value = as.character(round(100 * mean(is.na(x)), rd))
     )
   }
@@ -69,15 +76,8 @@ SD_table_function <- function(data, vars, by, rd = 1, include_missing = FALSE) {
       base_summary <- bind_rows(base_summary, miss_df)
     }
     
-    # Add counts per group
-    counts_df <- data %>%
-      group_by(!!by_var) %>%
-      summarise(n = n()) %>%
-      mutate(level = "n", value = as.character(n)) %>%
-      select(-n)
-    
     # Combine counts + summaries
-    out <- bind_rows(counts_df, base_summary) %>%
+    out <- base_summary %>%
       mutate(variable = v) %>%
       select(variable, level, everything()) %>%
       pivot_wider(names_from = !!by_var, values_from = value)
@@ -85,7 +85,7 @@ SD_table_function <- function(data, vars, by, rd = 1, include_missing = FALSE) {
     out
   })
   
-  bind_rows(summaries)
+  return(rbind(n_table,bind_rows(summaries)))
 }
 
 # or table function -----------------------------------------------------
