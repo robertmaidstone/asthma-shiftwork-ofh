@@ -1,6 +1,8 @@
-SD_table_function <- function(data, vars, by, rd = 1, include_missing = FALSE) {
+SD_table_function <- function(data, vars, by, rd = 1, missing = c("exclude", "include", "only")
+) {
+  missing <- match.arg(missing)
   # Tidy-eval for grouping variable
-  by_var <- rlang::ensym(by)
+  by_var <- rlang::sym(by)
   
   # Filter out unwanted values only for the grouping variable
   data <- data %>%
@@ -67,7 +69,7 @@ SD_table_function <- function(data, vars, by, rd = 1, include_missing = FALSE) {
       tidyr::unnest(tmp)
     
     # Add missingness if requested
-    if (include_missing) {
+    if (missing%in%c("include","only")) {
       miss_df <- data %>%
         group_by(!!by_var) %>%
         summarise(tmp = list(summarise_missing(.data[[v]]))) %>%
@@ -82,11 +84,51 @@ SD_table_function <- function(data, vars, by, rd = 1, include_missing = FALSE) {
       select(variable, level, everything()) %>%
       pivot_wider(names_from = !!by_var, values_from = value)
     
+    if (missing==c("only")) {
+      out <- out %>% filter(level=="Missing (%)")
+    }
     out
   })
   
   return(rbind(n_table,bind_rows(summaries)))
 }
+
+
+# sex SD function wrapper -------------------------------------------------
+
+SD_table_by_sex <- function(data, vars, by, rd = 1, missing = "exclude") {
+  # Split dataset
+  data_F <- data %>% filter(Sex == "Female")
+  data_M <- data %>% filter(Sex == "Male")
+  
+  # Run your existing function
+  tab_F <- SD_table_function(data_F, vars=vars, by=by, rd = rd, missing = missing)
+  tab_M <- SD_table_function(data_M, vars=vars, by=by, rd = rd, missing = missing)
+  
+  # Add sex labels
+  tab_F <- tab_F %>% mutate(Sex = "Female")
+  tab_M <- tab_M %>% mutate(Sex = "Male")
+  
+  # Build keys
+  keys_F <- interaction(tab_F$variable, tab_F$level, drop = TRUE)
+  keys_M <- interaction(tab_M$variable, tab_M$level, drop = TRUE)
+  
+  # Split
+  split_F <- split(tab_F, keys_F)[as.character(keys_F)]
+  split_M <- split(tab_M, keys_M)[as.character(keys_M)]
+  
+  # Interleave using Female's key order
+  interleaved <- lapply(names(split_F), function(k) {
+    bind_rows(split_F[[k]], split_M[[k]])
+  })
+  
+  # Bind in the correct order
+  final <- bind_rows(interleaved) %>%
+    relocate(Sex, .after = level)
+  
+  final #%>% arrange(variable,level,Sex)
+}
+
 
 # or table function -----------------------------------------------------
 

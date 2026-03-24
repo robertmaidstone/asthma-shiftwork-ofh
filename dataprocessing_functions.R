@@ -147,11 +147,10 @@ derive_job_vars <- function(data) {
 derive_sleep_vars <- function(data) {
   data <- data %>%
     mutate(
-      Chronotype = sleep_chronotype_1_1,
-      Chronotype=case_when(Chronotype %in% c("More a 'morning' than 'evening' person","More an 'evening' than a 'morning' person") ~ "Intermediate",
-                           Chronotype=="Definitely a 'morning' person" ~ "Morning",
-                           Chronotype=="Definitely an 'evening' person" ~ "Evening"),
-      sleep_dur=as.numeric(sleep_hrs_1_1)
+      Chronotype=case_when(sleep_chronotype_1_1 %in% c("More a 'morning' than 'evening' person","More an 'evening' than a 'morning' person") ~ "Intermediate",
+                           sleep_chronotype_1_1=="Definitely a 'morning' person" ~ "Morning",
+                           sleep_chronotype_1_1=="Definitely an 'evening' person" ~ "Evening"),
+      sleep_dur=as.numeric(gsub("[^0-9]", "", sleep_hrs_1_1))
     )
   data
 }
@@ -187,7 +186,7 @@ derive_core_demographic_vars <- function(data) {
     mutate(
       Sex = demog_sex_2_1,
       Submission_year = (submission_date |> strsplit("-") |> unlist())[(1:length(submission_date))*3-2],
-      Age = as.numeric(Submission_year)-as.numeric(birth_year), #change to be based on months/days as well as year??
+      Age = as.numeric(Submission_year)-as.numeric(gsub("[^0-9]", "", birth_year)), #change to be based on months/days as well as year??
       Ethnicity = demog_ethnicity_1_1,
       ethnicity_group = case_when(
         str_detect(demog_ethnicity_1_1, "White.*British") ~ "White British",
@@ -199,6 +198,24 @@ derive_core_demographic_vars <- function(data) {
         TRUE ~ "Other"
       )
     )
+  data
+}
+
+# environment variables ----------------------------------------------------
+derive_environment_vars <- function(data) {
+  data <- data %>%
+    mutate(
+      Hours_Outdoor_Summer = ifelse(
+        lifestyle_outdoor_sum_hrs_1_1 == "Less than an hour a day",
+        0,
+        as.numeric(gsub("[^0-9]", "", lifestyle_outdoor_sum_hrs_1_1))
+        ),
+        Hours_Outdoor_Winter = ifelse(
+          lifestyle_outdoor_win_hrs_1_1 == "Less than an hour a day",
+          0,
+          as.numeric(gsub("[^0-9]", "", lifestyle_outdoor_win_hrs_1_1))
+        )
+      )
   data
 }
 
@@ -220,7 +237,7 @@ filter_missing_data <- function(data){
            !is.na(LengthWW),
            !(Chronotype %in% c("Prefer not to answer","Do not know")),
            !(Income %in% c("Prefer not to answer","Do not know")),
-           !(sleep_hrs_1_1 %in% c("Do no know","Prefer not to answer"))
+           !(sleep_hrs_1_1 %in% c("Do not know","Prefer not to answer"))
            )
   data
 }
