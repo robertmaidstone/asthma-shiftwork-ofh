@@ -114,12 +114,14 @@ clean_packyears <- function(data,
 derive_smoking_vars <- function(data) {
 data <- data %>%
   mutate(
-    AnySmoking = !str_detect(smoke_tobacco_type_1_m, "I have not used"),
-    Cigarettes = str_detect(smoke_tobacco_type_1_m, "manufactured|hand-rolled"),
-    SmokeAmount = case_when(
-      !AnySmoking ~ "None",
-      Cigarettes ~ smoke_100_times_2_1,
-      TRUE ~ NA
+    smoking_status = case_when(
+      smoke_status_2_1=="Yes, every day" ~ "Current regular smoker",
+      (smoke_status_2_1=="Yes, some days")&(smoke_prev_reg_2_1=="Yes") ~ "Current occassional, previous regular",
+      (smoke_status_2_1=="Yes, but rarely")&(smoke_prev_reg_2_1=="Yes") ~ "Current occassional, previous regular",
+      (smoke_status_2_1=="No, not at all")&(smoke_prev_reg_2_1=="Yes")  ~ "Not current, previous regular",
+      (smoke_status_2_1=="Yes, some days")&(smoke_prev_reg_2_1=="No") ~ "Occassional smoker",
+      (smoke_status_2_1=="Yes, but rarely")&(smoke_prev_reg_2_1=="No") ~ "Occassional smoker",
+      (smoke_status_2_1=="No, not at all")&(smoke_prev_reg_2_1=="No")  ~ "Occassional smoker"
     )
   ) %>%
   clean_packyears(
