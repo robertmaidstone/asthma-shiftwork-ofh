@@ -3,3 +3,8 @@ plots/
 .Rproj.user
 .Rhistory
 README.html
+# Microsoft Word temporary files
+~$*.docx
+~$*.doc
+*.tmp
+~WRL*.tmp
