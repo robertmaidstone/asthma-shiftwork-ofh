@@ -58,6 +58,59 @@ derive_asthma_vars <- function(data) {
 
 # smoking variables -------------------------------------------------------
 
+clean_packyears <- function(data,
+                            start_var,
+                            stop_var,
+                            cigs_var,
+                            current_age_var,
+                            suffix = "") {
+  
+  data %>%
+    mutate(
+      # Extract numeric values
+      age_start_raw = as.numeric(str_extract({{ start_var }}, "\\d+")),
+      age_stop_raw  = as.numeric(str_extract({{ stop_var }}, "\\d+")),
+      cigs_day      = as.numeric(str_extract({{ cigs_var }}, "\\d+")),
+      current_age   = {{ current_age_var }},
+      
+      # Identify obvious reversals
+      reversal_flag = age_start_raw > age_stop_raw &
+        age_start_raw >= 5 &
+        age_stop_raw <= current_age &
+        (age_start_raw - age_stop_raw) < 70,
+      
+      # Correct reversals only when unambiguous
+      age_start = if_else(reversal_flag, age_stop_raw, age_start_raw),
+      age_stop  = if_else(reversal_flag, age_start_raw, age_stop_raw),
+      
+      # Duration
+      duration = age_stop - age_start,
+      
+      # Pack-years
+      packyears = (duration * cigs_day) / 20,
+      
+      # Implausible flags
+      implausible = case_when(
+        is.na(age_start) | is.na(age_stop) ~ TRUE,
+        age_start < 5 ~ TRUE,
+        age_stop > current_age ~ TRUE,
+        duration < 0 ~ TRUE,
+        #cigs_day > 80 ~ TRUE,          # >4 packs/day
+        #packyears > 300 ~ TRUE,        # extreme upper bound
+        TRUE ~ FALSE
+      ),
+      
+      # Cleaned pack-years
+      packyears_clean = if_else(implausible, NA_real_, packyears)
+    ) %>%
+    # Add suffix to avoid overwriting when running twice
+    rename_with(~ paste0(., suffix),
+                c(age_start_raw, age_stop_raw, cigs_day,
+                  reversal_flag, age_start, age_stop,
+                  duration, packyears, implausible, packyears_clean))
+}
+
+
 derive_smoking_vars <- function(data) {
 data <- data %>%
   mutate(
@@ -67,6 +120,39 @@ data <- data %>%
       !AnySmoking ~ "None",
       Cigarettes ~ smoke_100_times_2_1,
       TRUE ~ NA
+    )
+  ) %>%
+  clean_packyears(
+    start_var = smoke_reg_first_age_2_1,
+    stop_var  = Age,   # current smokers haven't stopped
+    cigs_var  = smoke_reg_day_2_1,
+    current_age_var = Age,
+    suffix = "_current"
+  ) %>%
+  clean_packyears(
+    start_var = smoke_first_age_2_1,
+    stop_var  = smoke_prev_age_2_1,
+    cigs_var  = smoke_avg_2_1,
+    current_age_var = Age,
+    suffix = "_previous"
+  ) %>%
+  mutate(
+    # Flag cases where both current and previous pack-years exist
+    packyears_both_flag = !is.na(packyears_current) &
+      !is.na(packyears_previous),
+    
+    # Combine into a single variable
+    packyears_clean_combined = case_when(
+      packyears_both_flag ~ NA_real_,  # both exist → set to missing
+      !is.na(packyears_current) ~ packyears_clean_current,
+      !is.na(packyears_previous) ~ packyears_clean_previous,
+      TRUE ~ NA_real_
+    ),
+    packyears_combined = case_when(
+      packyears_both_flag ~ NA_real_,  # both exist → set to missing
+      !is.na(packyears_current) ~ packyears_current,
+      !is.na(packyears_previous) ~ packyears_previous,
+      TRUE ~ NA_real_
     )
   )
 data
