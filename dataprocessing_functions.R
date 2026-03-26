@@ -113,17 +113,60 @@ clean_packyears <- function(data,
 
 derive_smoking_vars <- function(data) {
 data <- data %>%
+  ############### smoking status ################
   mutate(
     smoking_status = case_when(
-      smoke_status_2_1=="Yes, every day" ~ "Current regular smoker",
-      (smoke_status_2_1=="Yes, some days")&(smoke_prev_reg_2_1=="Yes") ~ "Current occassional, previous regular",
-      (smoke_status_2_1=="Yes, but rarely")&(smoke_prev_reg_2_1=="Yes") ~ "Current occassional, previous regular",
-      (smoke_status_2_1=="No, not at all")&(smoke_prev_reg_2_1=="Yes")  ~ "Not current, previous regular",
-      (smoke_status_2_1=="Yes, some days")&(smoke_prev_reg_2_1=="No") ~ "Occassional smoker",
-      (smoke_status_2_1=="Yes, but rarely")&(smoke_prev_reg_2_1=="No") ~ "Occassional smoker",
-      (smoke_status_2_1=="No, not at all")&(smoke_prev_reg_2_1=="No")  ~ "Occassional smoker"
+      is.na(smoke_tobacco_type_1_m) |
+        str_detect(smoke_tobacco_type_1_m, "Prefer not to answer") ~ NA_character_,
+      
+      str_detect(smoke_tobacco_type_1_m,
+                 "I have not used any of these tobacco") ~ "Never smoker",
+      
+      is.na(smoke_reg_1_m) |
+        str_detect(smoke_reg_1_m, "Prefer not to answer") ~ NA_character_,
+      
+      str_detect(smoke_reg_1_m,
+                 "I have not used any of these tobacco") ~ "Not regular",
+      
+      !str_detect(smoke_reg_1_m, "Cigarettes") ~ "Regular, but not cigarettes",
+      
+      smoke_status_2_1 == "Yes, every day" ~ "Current regular smoker",
+      
+      smoke_status_2_1 == "Yes, some days" &
+        smoke_prev_reg_2_1 == "Yes" ~ "Current occasional, previous regular",
+      
+      smoke_status_2_1 == "Yes, but rarely" &
+        smoke_prev_reg_2_1 == "Yes" ~ "Current occasional, previous regular",
+      
+      smoke_status_2_1 == "No, not at all" &
+        smoke_prev_reg_2_1 == "Yes" ~ "Not current, previous regular",
+      
+      smoke_status_2_1 == "Yes, some days" &
+        smoke_prev_reg_2_1 == "No" ~ "Occasional smoker",
+      
+      smoke_status_2_1 == "Yes, but rarely" &
+        smoke_prev_reg_2_1 == "No" ~ "Occasional smoker",
+      
+      smoke_status_2_1 == "No, not at all" &
+        smoke_prev_reg_2_1 == "No" ~ "Occasional smoker"
+    ),
+    
+    smoking_status = factor(
+      smoking_status,
+      levels = c(
+        "Never smoker",
+        "Not regular",
+        "Regular, but not cigarettes",
+        "Occasional smoker",
+        "Current occasional, previous regular",
+        "Not current, previous regular",
+        "Current regular smoker"
+      ),
+      ordered = TRUE
     )
-  ) %>%
+  )
+%>%
+  ###### packyears ########
   clean_packyears(
     start_var = smoke_reg_first_age_2_1,
     stop_var  = Age,   # current smokers haven't stopped
@@ -142,7 +185,6 @@ data <- data %>%
     # Flag cases where both current and previous pack-years exist
     packyears_both_flag = !is.na(packyears_current) &
       !is.na(packyears_previous),
-    
     # Combine into a single variable
     packyears_clean_combined = case_when(
       packyears_both_flag ~ NA_real_,  # both exist → set to missing
@@ -156,6 +198,28 @@ data <- data %>%
       !is.na(packyears_previous) ~ packyears_previous,
       TRUE ~ NA_real_
     )
+  ) %>%
+#################### smoke exposure ####################
+  mutate(
+    smoke_expo_hrs = case_when(
+      smoke_exposure_1_1 == "Never" ~ 0,
+      is.na(smoke_exposure_hrs_1_1)|(smoke_exposure_hrs_1_1=="Prefer not to answer") ~ NA_real_,
+      smoke_exposure_hrs_1_1 == "Less than 1 hour per day" ~ .5,
+      smoke_exposure_hrs_1_1 == "1 to 2 hours per days" ~ 1.5,
+      smoke_exposure_hrs_1_1 == "3 to 5 hours per day" ~ 4,
+      smoke_exposure_hrs_1_1 == "6 to 9 hours per day" ~ 7.5,
+      smoke_exposure_hrs_1_1 == "10 to 15 hours per day" ~ 12.5
+    ),
+    smoke_expo=case_when(
+    is.na(smoke_exposure_1_1)|(smoke_exposure_1_1=="Prefer not to answer") ~ NA_real_,
+    smoke_exposure_1_1 == "Never" ~ 0,
+    smoke_exposure_1_1 == "Every day" ~ 365,
+    smoke_exposure_1_1 == "Most days of the week" ~ 5.5*52.1429,
+    smoke_exposure_1_1 == "One day per week" ~ 1*52.1429,
+    smoke_exposure_1_1 == "One day per month" ~ 1*12,
+    smoke_exposure_1_1 == "A few days per year" ~ 5
+  ),
+  smoke_expo_year_hrs = smoke_expo_hrs*smoke_expo
   )
 data
 }
