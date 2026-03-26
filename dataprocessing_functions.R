@@ -164,8 +164,7 @@ data <- data %>%
       ),
       ordered = TRUE
     )
-  )
-%>%
+  )%>%
   ###### packyears ########
   clean_packyears(
     start_var = smoke_reg_first_age_2_1,
@@ -220,7 +219,48 @@ data <- data %>%
     smoke_exposure_1_1 == "A few days per year" ~ 5
   ),
   smoke_expo_year_hrs = smoke_expo_hrs*smoke_expo
-  )
+  ) %>%
+############# vapes #################################
+  mutate(regular_vapers =  str_detect(smoke_reg_1_m, "Electronic delivery devices"),
+         age_start_vape_raw = ifelse(regular_vapers,smoke_vape_avg_2_1,NA_real_),
+         amount_vaped = case_when(
+           is.na(smoke_vape_avg_2_1)|(smoke_vape_avg_2_1%in%c("","Prefer not to answer")) ~ NA_real_,
+           smoke_vape_avg_2_1 == "Never" ~ 0,
+           smoke_vape_avg_2_1 == "More than 45 times/day" ~ 45,
+           smoke_vape_avg_2_1 == "35-44 times/day" ~ 39.5,
+           smoke_vape_avg_2_1 == "25-34 times/day" ~ 29.5,
+           smoke_vape_avg_2_1 == "15-24 times/day" ~ 19.5,
+           smoke_vape_avg_2_1 == "5-14 times/day" ~ 9.5,
+           smoke_vape_avg_2_1 == "1-4 times/day" ~ 2.5,
+           smoke_vape_avg_2_1 == "3-6 times/week" ~ 4.5/7,
+           smoke_vape_avg_2_1 == "1-2 times/week" ~ .5/7,
+           smoke_vape_avg_2_1 == "2-3 times/mo" ~ 2.5/30.44,
+           smoke_vape_avg_2_1 == "Less than 1 time/mo" ~ .5/30.44
+           )
+         
+  ) %>%
+clean_packyears(
+  start_var = age_start_vape_raw,
+  stop_var  = Age,
+  cigs_var  = amount_vaped,
+  current_age_var = Age,
+  suffix = "_vape"
+)
+
+vape_patterns <- c(
+  Vape_Fruit_NoNic = "Fruit/dessert flavor WITHOUT nicotine",
+  Vape_Fruit_Nic = "Fruit/dessert flavor WITH nicotine",
+  Vape_Menth_NoNic = "Menthol flavor WITHOUT nicotine",
+  Vape_Menth_Nic = "Menthol flavor WITH nicotine",
+  Vape_Tobac_NoNic = "Tobacco flavor WITHOUT nicotine",
+  Vape_Tobac_Nic = "Tobacco flavor WITH nicotine",
+  Vape_Other = "Marijuana|Alcohol|Other"
+)
+
+for (nm in names(vape_patterns)) {
+  data[[nm]] <- str_detect(data$smoke_vape_type_2_m, vape_patterns[[nm]])
+}
+
 data
 }
 
