@@ -96,7 +96,7 @@ SD_table_function <- function(data, vars, by, rd = 1, missing = c("exclude", "in
 
 # sex SD function wrapper -------------------------------------------------
 
-SD_table_by_sex <- function(data, vars, by, rd = 1, missing = "exclude") {
+SD_table_by_sex <- function(data, vars, by, rd = 1, missing = "exclude",filter_PNTA_DNK=FALSE) {
   # Split dataset
   data_F <- data %>% filter(Sex == "Female")
   data_M <- data %>% filter(Sex == "Male")
@@ -125,7 +125,7 @@ SD_table_by_sex <- function(data, vars, by, rd = 1, missing = "exclude") {
   # Bind in the correct order
   final <- bind_rows(interleaved) %>%
     relocate(Sex, .after = level)
-  
+  if(filter_PNTA_DNK){final<-final %>% filter(!(level%in%c("Prefer not to answer","Do not know")))}
   final #%>% arrange(variable,level,Sex)
 }
 

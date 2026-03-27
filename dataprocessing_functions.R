@@ -22,6 +22,36 @@ load_and_merge <- function(..., id = "pid") {
   reduce(data_list, left_join, by = id)
 }
 
+
+# never/rarely, sometimes, usually, always --------------------------------
+
+factor_nsua <- function(x) {
+  allowed_levels <- c(
+    "Prefer not to answer",
+    "Do not know",
+    "Never/rarely",
+    "Sometimes",
+    "Usually",
+    "Always"
+  )
+  # find unexpected values
+  unexpected <- setdiff(unique(x), allowed_levels)
+  # warn if anything is unexpected
+  if (length(unexpected) > 0) {
+    warning(
+      "Unexpected values found: ",
+      paste(unexpected, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  # return ordered factor
+  factor(
+    x,
+    levels = allowed_levels,
+    ordered = TRUE
+  )
+}
+
 # define asthma variables -------------------------------------------------
 
 derive_asthma_vars <- function(data) {
@@ -329,7 +359,14 @@ derive_job_vars <- function(data) {
     mutate(
       Income = housing_income_1_1,
       Income_cat=factor(Income,levels=c('Less than £18,000','£18,000 to £30,999','£31,000 to £51,999','£52,000 to £100,000','Greater than £100,000'),ordered=T),
-      LengthWW = as.numeric(gsub("[^0-9]", "", work_wk_hrs_1_1))
+      LengthWW = as.numeric(gsub("[^0-9]", "", work_wk_hrs_1_1)),
+      Work_Manual_Labour = factor_nsua(work_manual_labour_1_1),
+      Years_in_Current_Job = ifelse(
+        work_yrs_1_1 == "Less than a year",
+        0,
+        as.numeric(gsub("[^0-9]", "", work_yrs_1_1))
+      ),
+      Work_WalkorStand = factor_nsua(work_walk_stand_1_1)
     )
   data
 }
