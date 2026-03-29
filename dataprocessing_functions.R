@@ -142,8 +142,8 @@ clean_packyears <- function(data,
 
 
 derive_smoking_vars <- function(data) {
-data <- data %>%
-  ############### smoking status ################
+  data <- data %>%
+    ############### smoking status ################
   mutate(
     smoking_status = case_when(
       is.na(smoke_tobacco_type_1_m) |
@@ -193,9 +193,27 @@ data <- data %>%
         "Current regular smoker"
       ),
       ordered = TRUE
+    ),
+    smoking_status_cond = factor(case_when(
+      smoking_status == "Never smoker" ~ "Never smoker",
+      smoking_status == "Not regular" ~ "Occasional smoker",
+      smoking_status == "Regular, but not cigarettes" ~ "Regular, but not cigarettes",
+      smoking_status == "Not regular" ~ "Occasional smoker",
+      smoking_status == "Occasional smoker" ~ "Occasional smoker",
+      smoking_status == "Current occasional, previous regular" ~ "Previous regular smoker",
+      smoking_status == "Not current, previous regular" ~ "Previous regular smoker",
+      smoking_status == "Current regular smoker" ~ "Current regular smoker"
+    ),levels= c(
+      "Never smoker",
+      "Regular, but not cigarettes",
+      "Occasional smoker",
+      "Previous regular smoke",
+      "Current regular smoker"
+    ), ordered=TRUE
     )
   )%>%
-  ###### packyears ########
+    
+    ###### packyears ########
   clean_packyears(
     start_var = smoke_reg_first_age_2_1,
     stop_var  = Age,   # current smokers haven't stopped
@@ -203,32 +221,32 @@ data <- data %>%
     current_age_var = Age,
     suffix = "_current"
   ) %>%
-  clean_packyears(
-    start_var = smoke_first_age_2_1,
-    stop_var  = smoke_prev_age_2_1,
-    cigs_var  = smoke_avg_2_1,
-    current_age_var = Age,
-    suffix = "_previous"
-  ) %>%
-  mutate(
-    # Flag cases where both current and previous pack-years exist
-    packyears_both_flag = !is.na(packyears_current) &
-      !is.na(packyears_previous),
-    # Combine into a single variable
-    packyears_clean_combined = case_when(
-      packyears_both_flag ~ NA_real_,  # both exist → set to missing
-      !is.na(packyears_current) ~ packyears_clean_current,
-      !is.na(packyears_previous) ~ packyears_clean_previous,
-      TRUE ~ NA_real_
-    ),
-    packyears_combined = case_when(
-      packyears_both_flag ~ NA_real_,  # both exist → set to missing
-      !is.na(packyears_current) ~ packyears_current,
-      !is.na(packyears_previous) ~ packyears_previous,
-      TRUE ~ NA_real_
-    )
-  ) %>%
-#################### smoke exposure ####################
+    clean_packyears(
+      start_var = smoke_first_age_2_1,
+      stop_var  = smoke_prev_age_2_1,
+      cigs_var  = smoke_avg_2_1,
+      current_age_var = Age,
+      suffix = "_previous"
+    ) %>%
+    mutate(
+      # Flag cases where both current and previous pack-years exist
+      packyears_both_flag = !is.na(packyears_current) &
+        !is.na(packyears_previous),
+      # Combine into a single variable
+      packyears_clean_combined = case_when(
+        packyears_both_flag ~ NA_real_,  # both exist → set to missing
+        !is.na(packyears_current) ~ packyears_clean_current,
+        !is.na(packyears_previous) ~ packyears_clean_previous,
+        TRUE ~ NA_real_
+      ),
+      packyears_combined = case_when(
+        packyears_both_flag ~ NA_real_,  # both exist → set to missing
+        !is.na(packyears_current) ~ packyears_current,
+        !is.na(packyears_previous) ~ packyears_previous,
+        TRUE ~ NA_real_
+      )
+    ) %>%
+    #################### smoke exposure ####################
   mutate(
     smoke_expo_hrs = case_when(
       smoke_exposure_1_1 == "Never" ~ 0,
@@ -240,17 +258,17 @@ data <- data %>%
       smoke_exposure_hrs_1_1 == "10 to 15 hours per day" ~ 12.5
     ),
     smoke_expo=case_when(
-    is.na(smoke_exposure_1_1)|(smoke_exposure_1_1=="Prefer not to answer") ~ NA_real_,
-    smoke_exposure_1_1 == "Never" ~ 0,
-    smoke_exposure_1_1 == "Every day" ~ 365,
-    smoke_exposure_1_1 == "Most days of the week" ~ 5.5*52.1429,
-    smoke_exposure_1_1 == "One day per week" ~ 1*52.1429,
-    smoke_exposure_1_1 == "One day per month" ~ 1*12,
-    smoke_exposure_1_1 == "A few days per year" ~ 5
-  ),
-  smoke_expo_year_hrs = smoke_expo_hrs*smoke_expo
+      is.na(smoke_exposure_1_1)|(smoke_exposure_1_1=="Prefer not to answer") ~ NA_real_,
+      smoke_exposure_1_1 == "Never" ~ 0,
+      smoke_exposure_1_1 == "Every day" ~ 365,
+      smoke_exposure_1_1 == "Most days of the week" ~ 5.5*52.1429,
+      smoke_exposure_1_1 == "One day per week" ~ 1*52.1429,
+      smoke_exposure_1_1 == "One day per month" ~ 1*12,
+      smoke_exposure_1_1 == "A few days per year" ~ 5
+    ),
+    smoke_expo_year_hrs = smoke_expo_hrs*smoke_expo
   ) %>%
-############# vapes #################################
+    ############# vapes #################################
   mutate(regular_vapers =  str_detect(smoke_reg_1_m, "Electronic delivery devices"),
          age_start_vape_raw = ifelse(regular_vapers,smoke_vape_avg_2_1,NA_real_),
          amount_vaped = case_when(
@@ -266,32 +284,32 @@ data <- data %>%
            smoke_vape_avg_2_1 == "1-2 times/week" ~ .5/7,
            smoke_vape_avg_2_1 == "2-3 times/mo" ~ 2.5/30.44,
            smoke_vape_avg_2_1 == "Less than 1 time/mo" ~ .5/30.44
-           )
+         )
          
   ) %>%
-clean_packyears(
-  start_var = age_start_vape_raw,
-  stop_var  = Age,
-  cigs_var  = amount_vaped,
-  current_age_var = Age,
-  suffix = "_vape"
-)
-
-vape_patterns <- c(
-  Vape_Fruit_NoNic = "Fruit/dessert flavor WITHOUT nicotine",
-  Vape_Fruit_Nic = "Fruit/dessert flavor WITH nicotine",
-  Vape_Menth_NoNic = "Menthol flavor WITHOUT nicotine",
-  Vape_Menth_Nic = "Menthol flavor WITH nicotine",
-  Vape_Tobac_NoNic = "Tobacco flavor WITHOUT nicotine",
-  Vape_Tobac_Nic = "Tobacco flavor WITH nicotine",
-  Vape_Other = "Marijuana|Alcohol|Other"
-)
-
-for (nm in names(vape_patterns)) {
-  data[[nm]] <- str_detect(data$smoke_vape_type_2_m, vape_patterns[[nm]])
-}
-
-data
+    clean_packyears(
+      start_var = age_start_vape_raw,
+      stop_var  = Age,
+      cigs_var  = amount_vaped,
+      current_age_var = Age,
+      suffix = "_vape"
+    )
+  
+  vape_patterns <- c(
+    Vape_Fruit_NoNic = "Fruit/dessert flavor WITHOUT nicotine",
+    Vape_Fruit_Nic = "Fruit/dessert flavor WITH nicotine",
+    Vape_Menth_NoNic = "Menthol flavor WITHOUT nicotine",
+    Vape_Menth_Nic = "Menthol flavor WITH nicotine",
+    Vape_Tobac_NoNic = "Tobacco flavor WITHOUT nicotine",
+    Vape_Tobac_Nic = "Tobacco flavor WITH nicotine",
+    Vape_Other = "Marijuana|Alcohol|Other"
+  )
+  
+  for (nm in names(vape_patterns)) {
+    data[[nm]] <- str_detect(data$smoke_vape_type_2_m, vape_patterns[[nm]])
+  }
+  
+  data
 }
 
 # shift work variables ----------------------------------------------------
@@ -312,7 +330,7 @@ derive_shiftwork_vars <- function(data) {
       Shift_work_b=case_when(
         Shift_work =="No shift work" ~ "No shift work",
         Shift_work %in% c("Never/rarely","Sometimes","Always") ~ "Shift work"
-        )
+      )
     )
   
   data
@@ -346,9 +364,9 @@ derive_contraception_vars <- function(data) {
 derive_clinical_vars <- function(data) {
   data <- data %>%
     mutate(BMI = weight / (height/100)^2,
-            BMI_class = cut(BMI, breaks=c(-Inf,18.5,25,30,35,40,Inf), closed = "left", boundary = 10),
-            BRI = 364.2-365.5*sqrt(1-((waist/(2*pi))^2)/((.5*height)^2))
-  )
+           BMI_class = cut(BMI, breaks=c(-Inf,18.5,25,30,35,40,Inf), closed = "left", boundary = 10),
+           BRI = 364.2-365.5*sqrt(1-((waist/(2*pi))^2)/((.5*height)^2))
+    )
   data
 }
 
@@ -390,7 +408,7 @@ derive_alcohol_vars <- function(data) {
   data <- data %>%
     mutate(Alcohol_status = ifelse(alcohol_curr_1_1=="Never",alcohol_prev_1_1,alcohol_curr_1_1),
            Alcohol_status=factor(Alcohol_status,levels=c('No','Special occasions only','One to three times a month','Once or twice a week','Three or four times a week','Daily or almost daily','Yes'),ordered=T))
-    data
+  data
 }
 
 # exercise variables -------------------------------------------------
@@ -438,13 +456,13 @@ derive_environment_vars <- function(data) {
         lifestyle_outdoor_sum_hrs_1_1 == "Less than an hour a day",
         0,
         as.numeric(gsub("[^0-9]", "", lifestyle_outdoor_sum_hrs_1_1))
-        ),
-        Hours_Outdoor_Winter = ifelse(
-          lifestyle_outdoor_win_hrs_1_1 == "Less than an hour a day",
-          0,
-          as.numeric(gsub("[^0-9]", "", lifestyle_outdoor_win_hrs_1_1))
-        )
+      ),
+      Hours_Outdoor_Winter = ifelse(
+        lifestyle_outdoor_win_hrs_1_1 == "Less than an hour a day",
+        0,
+        as.numeric(gsub("[^0-9]", "", lifestyle_outdoor_win_hrs_1_1))
       )
+    )
   data
 }
 
@@ -467,6 +485,6 @@ filter_missing_data <- function(data){
            !(Chronotype %in% c("Prefer not to answer","Do not know")),
            !(Income %in% c("Prefer not to answer","Do not know")),
            !(sleep_hrs_1_1 %in% c("Do not know","Prefer not to answer"))
-           )
+    )
   data
 }
