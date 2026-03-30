@@ -32,7 +32,8 @@ factor_nsua <- function(x) {
     "Never/rarely",
     "Sometimes",
     "Usually",
-    "Always"
+    "Always",
+    ""
   )
   # find unexpected values
   unexpected <- setdiff(unique(x), allowed_levels)
@@ -51,6 +52,28 @@ factor_nsua <- function(x) {
     ordered = TRUE
   )
 }
+
+factor_nsua_cond <- function(x){
+  x <- factor_nsua(x)
+  
+  x <- ifelse(
+    x %in% c("Sometimes", "Usually"),
+    "Occasionally",
+    as.character(x)
+  )
+  
+  x <- factor(x,
+              levels=c(
+                "Prefer not to answer",
+                "Do not know",
+                "Never/rarely",
+                "Occasionally",
+                "Always",
+                ""
+              ),
+              ordered=T)
+  x
+}                              
 
 # define asthma variables -------------------------------------------------
 
@@ -207,7 +230,7 @@ derive_smoking_vars <- function(data) {
       "Never smoker",
       "Regular, but not cigarettes",
       "Occasional smoker",
-      "Previous regular smoke",
+      "Previous regular smoker",
       "Current regular smoker"
     ), ordered=TRUE
     )
@@ -378,13 +401,13 @@ derive_job_vars <- function(data) {
       Income = housing_income_1_1,
       Income_cat=factor(Income,levels=c('Less than £18,000','£18,000 to £30,999','£31,000 to £51,999','£52,000 to £100,000','Greater than £100,000'),ordered=T),
       LengthWW = as.numeric(gsub("[^0-9]", "", work_wk_hrs_1_1)),
-      Work_Manual_Labour = factor_nsua(work_manual_labour_1_1),
+      Work_Manual_Labour = factor_nsua_cond(work_manual_labour_1_1),
       Years_in_Current_Job = ifelse(
         work_yrs_1_1 == "Less than a year",
         0,
         as.numeric(gsub("[^0-9]", "", work_yrs_1_1))
       ),
-      Work_WalkorStand = factor_nsua(work_walk_stand_1_1)
+      Work_WalkorStand = factor_nsua_cond(work_walk_stand_1_1)
     )
   data
 }
