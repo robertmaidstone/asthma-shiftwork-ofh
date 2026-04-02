@@ -13,9 +13,15 @@ Functions and code to analyse Our Future Health data. Contains data processing c
 asthma-shiftwork-ofh/
 ├── data/                     # Summary data from OFH (not included)
 ├── notes/                     # notes on variables in OFH
-      ├── smokingvariables_jan26release.docx #includes definition of packyears
+      ├── smokingvariables_jan26release.docx #includes definition of packyears and vaping variables
+      ├── alcoholvariables_jan26release.docx 
+      ├── workandedvariables_jan26release.docx 
+      ├── comorbidvariables_jan26release.docx 
 ├── datafields/                     # .txt files with data fields exported by Table Exporter
-      ├── questionaire.txt          # from questionaire entity 
+      ├── questionaire.txt          # from questionaire entity
+      ├── participant.txt          # from participant entity
+      ├── nhse_eng_ed.txt          # from emergency department entity
+      ├── nhse_eng_inpat.txt         # from inpatient entity 
 ├── data_processing.R               # defunct data processing pipeline
 ├── data_processing_functions.R          # functions for loading data and variable derivation
 ├── functions.R          # functions for running logistic regression models and outputting results
