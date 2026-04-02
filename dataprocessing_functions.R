@@ -427,6 +427,25 @@ derive_sleep_vars <- function(data) {
 
 # alcohol variables -------------------------------------------------
 
+unit_map <- list(
+  BEER = 2.3,
+  SPIRITS = 1.0,
+  WINE_RED = 2.3,
+  WINE_WHITE = 2.3,
+  WINE_FORT = 1.5,
+  OTHER = 1.1
+)
+
+calc_units <- function(data, prefix, unit_value) {
+  mth <- data[[paste0(prefix, "_mth_2_1")]]
+  wk  <- data[[paste0(prefix, "_wk_1_1")]]
+  
+  weekly_from_mth <- if (!is.null(mth)) (mth/4.345) * unit_value else 0
+  weekly_from_wk  <- if (!is.null(wk))  wk * unit_value else 0
+  
+  weekly_from_mth + weekly_from_wk
+}
+
 derive_alcohol_vars <- function(data) {
   data <- data %>%
     mutate(Alcohol_status = case_when(
@@ -436,7 +455,18 @@ derive_alcohol_vars <- function(data) {
              (alcohol_curr_1_1%in%c('Once or twice a week','Three or four times a week')) ~ "1-4 times a week",
              (alcohol_curr_1_1=="Daily or almost daily") ~ "Daily or almost daily"
            ),
-           Alcohol_status=factor(Alcohol_status,levels=c('Never drinker','Previous drinker','Less than 4 times a month','1-4 times a week','Daily or almost daily'),ordered=T))
+           Alcohol_status=factor(Alcohol_status,levels=c('Never drinker','Previous drinker','Less than 4 times a month','1-4 times a week','Daily or almost daily'),ordered=T),
+           
+           units_beer  = calc_units(.data, "alcohol_beer",  unit_map$BEER),
+           units_spir  = calc_units(.data, "alcohol_spirits", unit_map$SPIRITS),
+           units_red   = calc_units(.data, "alcohol_wine_red", unit_map$WINE_RED),
+           units_white = calc_units(.data, "alcohol_wine_white", unit_map$WINE_WHITE),
+           units_fort  = calc_units(.data, "alcohol_wine_fort", unit_map$WINE_FORT),
+           units_other = calc_units(.data, "alcohol_other", unit_map$OTHER),
+           
+           total_units_week = units_beer + units_spir + units_red +
+             units_white + units_fort + units_other
+           )
   data
 }
 
