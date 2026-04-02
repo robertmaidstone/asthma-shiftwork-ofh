@@ -429,8 +429,14 @@ derive_sleep_vars <- function(data) {
 
 derive_alcohol_vars <- function(data) {
   data <- data %>%
-    mutate(Alcohol_status = ifelse(alcohol_curr_1_1=="Never",alcohol_prev_1_1,alcohol_curr_1_1),
-           Alcohol_status=factor(Alcohol_status,levels=c('No','Special occasions only','One to three times a month','Once or twice a week','Three or four times a week','Daily or almost daily','Yes'),ordered=T))
+    mutate(Alcohol_status = case_when(
+             (alcohol_curr_1_1=="Never") & (alcohol_prev_1_1=="No") ~ "Never drinker",
+             (alcohol_curr_1_1=="Never") & (alcohol_prev_1_1=="Yes") ~ "Previous drinker",
+             (alcohol_curr_1_1%in%c('Special occasions only','One to three times a month')) ~ "Less than 4 times a month",
+             (alcohol_curr_1_1%in%c('Once or twice a week','Three or four times a week')) ~ "1-4 times a week",
+             (alcohol_curr_1_1=="Daily or almost daily") ~ "Daily or almost daily"
+           ),
+           Alcohol_status=factor(Alcohol_status,levels=c('Never drinker','Previous drinker','Less than 4 times a month','1-4 times a week','Daily or almost daily'),ordered=T))
   data
 }
 
