@@ -109,6 +109,22 @@ derive_asthma_vars <- function(data) {
   data
 }
 
+# define comorbidity variables -------------------------------------------------
+
+derive_comorbid_vars <- function(data) {
+  data <- data %>%
+    mutate(
+      COPD = str_detect(diag_resp_1_m, "COPD"),
+      Lung_fibrosis = str_detect(diag_resp_1_m, "Lung fibrosis"),
+      Bronchiectasis = str_detect(diag_resp_1_m, "Bronchiectasis"),
+      Hay_fever = str_detect(diag_resp_1_m, "Hay Fever"),
+      Other_Resp = str_detect(diag_resp_1_m, "Other")
+    )
+  
+  data
+}
+
+
 # smoking variables -------------------------------------------------------
 
 clean_packyears <- function(data,
@@ -440,33 +456,46 @@ calc_units <- function(data, prefix, unit_value) {
   mth <- data[[paste0(prefix, "_mth_2_1")]]
   wk  <- data[[paste0(prefix, "_wk_1_1")]]
   
-  weekly_from_mth <- if (!is.null(mth)) (mth/4.345) * unit_value else 0
-  weekly_from_wk  <- if (!is.null(wk))  wk * unit_value else 0
+  mth <- as.numeric(gsub("[^0-9]", "", mth))
+  wk <- as.numeric(gsub("[^0-9]", "", wk))
   
-  weekly_from_mth + weekly_from_wk
+  # If BOTH are NA → return NA
+  both_na <- is.na(mth) & is.na(wk)
+  
+  # Replace NA with 0 for calc
+  mth[is.na(mth)] <- 0
+  wk[is.na(wk)]   <- 0
+  
+  # Compute weekly units
+  out <- (mth / 4.345) * unit_value + wk * unit_value
+  
+  # Restore NA where both inputs were NA
+  out[both_na] <- NA_real_
+  
+  out
 }
 
 derive_alcohol_vars <- function(data) {
   data <- data %>%
     mutate(Alcohol_status = case_when(
-             (alcohol_curr_1_1=="Never") & (alcohol_prev_1_1=="No") ~ "Never drinker",
-             (alcohol_curr_1_1=="Never") & (alcohol_prev_1_1=="Yes") ~ "Previous drinker",
-             (alcohol_curr_1_1%in%c('Special occasions only','One to three times a month')) ~ "Less than 4 times a month",
-             (alcohol_curr_1_1%in%c('Once or twice a week','Three or four times a week')) ~ "1-4 times a week",
-             (alcohol_curr_1_1=="Daily or almost daily") ~ "Daily or almost daily"
-           ),
-           Alcohol_status=factor(Alcohol_status,levels=c('Never drinker','Previous drinker','Less than 4 times a month','1-4 times a week','Daily or almost daily'),ordered=T),
-           
-           units_beer  = calc_units(.data, "alcohol_beer",  unit_map$BEER),
-           units_spir  = calc_units(.data, "alcohol_spirits", unit_map$SPIRITS),
-           units_red   = calc_units(.data, "alcohol_wine_red", unit_map$WINE_RED),
-           units_white = calc_units(.data, "alcohol_wine_white", unit_map$WINE_WHITE),
-           units_fort  = calc_units(.data, "alcohol_wine_fort", unit_map$WINE_FORT),
-           units_other = calc_units(.data, "alcohol_other", unit_map$OTHER),
-           
-           total_units_week = units_beer + units_spir + units_red +
-             units_white + units_fort + units_other
-           )
+      (alcohol_curr_1_1=="Never") & (alcohol_prev_1_1=="No") ~ "Never drinker",
+      (alcohol_curr_1_1=="Never") & (alcohol_prev_1_1=="Yes") ~ "Previous drinker",
+      (alcohol_curr_1_1%in%c('Special occasions only','One to three times a month')) ~ "Less than 4 times a month",
+      (alcohol_curr_1_1%in%c('Once or twice a week','Three or four times a week')) ~ "1-4 times a week",
+      (alcohol_curr_1_1=="Daily or almost daily") ~ "Daily or almost daily"
+    ),
+    Alcohol_status=factor(Alcohol_status,levels=c('Never drinker','Previous drinker','Less than 4 times a month','1-4 times a week','Daily or almost daily'),ordered=T),
+    
+    units_beer  = calc_units(.data, "alcohol_beer",  unit_map$BEER),
+    units_spir  = calc_units(.data, "alcohol_spirits", unit_map$SPIRITS),
+    units_red   = calc_units(.data, "alcohol_wine_red", unit_map$WINE_RED),
+    units_white = calc_units(.data, "alcohol_wine_white", unit_map$WINE_WHITE),
+    units_fort  = calc_units(.data, "alcohol_wine_fort", unit_map$WINE_FORT),
+    units_other = calc_units(.data, "alcohol_other", unit_map$OTHER),
+    
+    total_units_week = units_beer + units_spir + units_red +
+      units_white + units_fort + units_other
+    )
   data
 }
 
