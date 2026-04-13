@@ -165,24 +165,63 @@ or_table_df <- function(data, formula, subset = NULL, digits = 2) {
 
 # plot OR_table_df output -------------------------------------------------
 
-plot_or <- function(or_table_1,or_table_2,names){
+plot_or <- function(or_table_1, or_table_2, var_names,
+                    group_names = c("Group 1", "Group 2"),
+                    referent_label = "Day workers (referent)",
+                    pd_width = 0.5) {
   
-  plot_data_sex %>%
-    ggplot(aes(y=OR,x=`Shift work`,colour=Sex)) + 
-    geom_hline(aes(yintercept = 1), size = .25, linetype = "dashed") +
-    geom_errorbar(aes(ymax = UCI, ymin = LCI), size = .5, width = .4,
+  # vars_named is a named vector: pretty_label = variable_name
+  pretty_labels <- names(var_names)
+  var_codes     <- unname(var_names)
+  
+  # Add group labels
+  or_table_1$Group <- group_names[1]
+  or_table_2$Group <- group_names[2]
+  
+  # Combine
+  df <- rbind(or_table_1, or_table_2)
+  
+  # Filter to selected variables
+  df <- df[df$term %in% var_codes, ]
+  
+  # Add pretty labels
+  df$label <- pretty_labels[match(df$term, var_codes)]
+  
+  # Add referent row (no CI, OR = 1)
+  ref_row <- data.frame(
+    term = "referent",
+    OR   = 1,
+    LCL  = NA,
+    UCL  = NA,
+    formatted = NA,
+    Group = NA,     # no colour
+    label = referent_label,
+    stringsAsFactors = FALSE
+  )
+  
+  # Plot
+  ggplot(df, aes(x = term, y = OR, colour = Group)) +
+    geom_hline(yintercept = 1, linetype = "dashed", size = 0.3) +
+    geom_errorbar(data = subset(df, !is.na(Group)),
+                  aes(ymin = LCL, ymax = UCL),
+                  width = 0.3,
                   position = position_dodge(width = pd_width)) +
-    geom_point(position = position_dodge(width = pd_width)) + 
-    theme_bw() +
-    theme(axis.title.y = element_blank(),
-          legend.position=c(0.8, 0.25),
-          legend.background = element_blank())+
-    ylab("Odds Ratio") +
-    ylim(c(.6,1.5)) +
+    # Points (referent has no colour)
+    geom_point(
+      data = subset(df, is.na(Group)),
+      colour = "black",
+      size = 2
+    ) +
+    geom_point(
+      data = subset(df, !is.na(Group)),
+      position = position_dodge(width = pd_width),
+      size = 2
+    ) +
     coord_flip() +
-    scale_x_discrete(limits = rev(levels(plot_data$`Shift work`)))+
-    scale_colour_manual(#values = cbPalette[2:4],
-      #values = c("transparent","transparent","black"),
-      values = c(cbPalette[c(2,3)],"black"),
-      name = element_blank(),guide = guide_legend(reverse=TRUE))-> p_sex
+    theme_bw() +
+    ylab("Odds Ratio") +
+    xlab("") +
+    scale_colour_manual(values = c("red", "black")) +
+    theme(legend.position = c(0.9, 0.9),
+          legend.background = element_blank())
 }
