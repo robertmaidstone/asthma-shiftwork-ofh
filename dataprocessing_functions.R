@@ -118,7 +118,15 @@ derive_comorbid_vars <- function(data) {
       Lung_fibrosis = str_detect(diag_resp_1_m, "Lung fibrosis"),
       Bronchiectasis = str_detect(diag_resp_1_m, "Bronchiectasis"),
       Hay_fever = str_detect(diag_resp_1_m, "Hay Fever"),
-      Other_Resp = str_detect(diag_resp_1_m, "Other")
+      Other_Resp = str_detect(diag_resp_1_m, "Other"),
+      Any_CVD = diag_cvd_1_m != ""
+      High_Cholesterol = str_detect(diag_cvd_1_m, "High Cholesterol"),
+      High_Blood_Pres = str_detect(diag_cvd_1_m, "High Blood Pressure"),
+      Anxiety = str_detect(diag_psych_1_m, "Anxiety"),
+      Depression = str_detect(diag_psych_1_m, "Depression"),
+      Type_I_Diabetes = str_detect(diag_endocr_1_m, "Type 1 diabetes"),
+      Type_II_Diabetes = str_detect(diag_endocr_1_m, "Type 2 diabetes"),
+      GO_Acid_Reflux = str_detect(diag_endocr_1_m, "Gastro-oesophageal")
     )
   
   data
