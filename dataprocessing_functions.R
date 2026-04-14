@@ -562,6 +562,19 @@ derive_environment_vars <- function(data) {
   data
 }
 
+# prospective variables ----------------------------------------------------
+derive_prospective_vars <- function(data) {
+  data <- data %>%
+    mutate(
+      submission_date=as.Date(submission_date),
+      first_asthma_date=as.Date(first_asthma_date),
+      asthma_beforebaseline=(first_asthma_date < submission_date ),
+      status = 1-as.numeric(is.na(asthma_beforebaseline)),
+      followuptime=ifelse(status==0,endoffollowup-submission_date,first_asthma_date-submission_date)
+    )
+  data
+}
+
 
 # filter out missing data -------------------------------------------------
 

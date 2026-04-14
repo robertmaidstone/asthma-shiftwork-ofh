@@ -225,3 +225,41 @@ plot_or <- function(or_table_1, or_table_2, var_names,
     theme(legend.position = c(0.9, 0.9),
           legend.background = element_blank())
 }
+
+# hr table function -----------------------------------------------------
+
+hr_table_df <- function(data, formula, subset = NULL, digits = 2) {
+  # Apply subset if provided
+  if (!is.null(subset)) {
+    data <- data[subset, ]
+  }
+  
+  #filter out data prior to baseline
+  
+  data <- data %>% dplyr::filter(is.na(asthma_beforebaseline)|!asthma_beforebaseline)
+  # Convert character to formula if needed
+  if (is.character(formula)) {
+    formula <- as.formula(formula)
+  }
+  # Fit hazard ratio model
+  mod <- coxph(formula, data = data)
+  
+  # Extract coefficients and Wald CIs
+  coefs <- coef(mod)
+  ci    <- confint.default(mod)
+  # Exponentiate
+  OR  <- exp(coefs)
+  LCL <- exp(ci[,1])
+  UCL <- exp(ci[,2])
+  # Build data frame
+  out <- data.frame(
+    term = names(coefs),
+    OR   = round(OR, digits),
+    LCL  = round(LCL, digits),
+    UCL  = round(UCL, digits),
+    stringsAsFactors = FALSE
+  )
+  # Add formatted column
+  out$formatted <- paste0(out$OR, " (", out$LCL, "–", out$UCL, ")")
+  return(out)
+}
