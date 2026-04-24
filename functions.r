@@ -138,22 +138,23 @@ model_missing <- function(data, formula, subset = NULL) {
   }
   var_vec <- strsplit(formula,
                       split = "\\+|~")[[1]] |> trimws()
-  # table of missing per variable
-  missing_table <- tibble(
-    variable = var_vec,
-    missing = sapply(var_vec, function(v) {
-      data %>% filter(is.na(.data[[v]])) %>% nrow()
-    })
-  )
+  # per-variable missing counts
+  missing_table <- data %>%
+    summarise(across(all_of(var_vec), ~ sum(is.na(.)))) %>%
+    pivot_longer(
+      cols = everything(),
+      names_to = "variable",
+      values_to = "missing"
+    )
   
-  # total missing across ANY variable in var_vec
+  # total rows with any missing among var_vec
   total_missing <- data %>%
     filter(if_any(all_of(var_vec), is.na)) %>%
     nrow()
   
   # add total row
   missing_table <- missing_table %>%
-    add_row(variable = "TOTAL_ANY_MISSING", missing = total_missing)
+    bind_rows(tibble(variable = "TOTAL_ANY_MISSING", missing = total_missing))
   
   missing_table
   
