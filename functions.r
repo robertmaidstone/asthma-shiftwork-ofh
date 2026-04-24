@@ -130,6 +130,34 @@ SD_table_by_sex <- function(data, vars, by, rd = 1, missing = "exclude",filter_P
 }
 
 
+# model missing data ------------------------------------------------------
+
+model_missing <- function(data, formula, subset = NULL) {
+  if (!is.null(subset)) {
+    data <- data[subset, ]
+  }
+  var_vec <- strsplit(formula,
+                      split = "\\+|~")[[1]] |> trimws()
+  # table of missing per variable
+  missing_table <- tibble(
+    variable = var_vec,
+    missing = sapply(var_vec, function(v) {
+      data %>% filter(is.na(.data[[v]])) %>% nrow()
+    })
+  )
+  
+  # total missing across ANY variable in var_vec
+  total_missing <- data %>%
+    filter(if_any(all_of(var_vec), is.na)) %>%
+    nrow()
+  
+  # add total row
+  missing_table <- missing_table %>%
+    add_row(variable = "TOTAL_ANY_MISSING", missing = total_missing)
+  
+  missing_table
+  
+}
 # or table function -----------------------------------------------------
 
 or_table_df <- function(data, formula, subset = NULL, digits = 2) {
