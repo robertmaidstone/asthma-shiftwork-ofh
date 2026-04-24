@@ -291,6 +291,11 @@ derive_smoking_vars <- function(data) {
         !is.na(packyears_current) ~ packyears_current,
         !is.na(packyears_previous) ~ packyears_previous,
         TRUE ~ NA_real_
+      ),
+      packyears_clean_combined_0 = case_when(
+        is.na(smoking_status_cond) ~ NA_real_,
+        is.na(packyears_clean_combined) ~ 0,
+        !is.na(packyears_clean_combined) ~ packyears_clean_combined
       )
     ) %>%
     #################### smoke exposure ####################
