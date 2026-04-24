@@ -190,6 +190,70 @@ or_table_df <- function(data, formula, subset = NULL, digits = 2) {
   return(out)
 }
 
+# or table out function -----------------------------------------------------
+
+or_table_out <- function(data, mod_male, mod_female,shift_vars) {
+  sample_sizes <- data %>%
+    count(Sex, Shift_work, name = "N_total")
+  
+  case_counts <- data %>%
+    group_by(Sex, Shift_work) %>%
+    summarise(
+      N_cases = sum(Asthma_med2 == 1, na.rm = TRUE),
+      .groups = "drop"
+    )
+  
+  group_summary <- sample_sizes %>%
+    left_join(case_counts, by = c("Sex", "Shift_work")) %>%
+    mutate(
+      case_percent = N_cases / N_total * 100
+    )
+  
+  mod_male2 <- mod_male %>%
+    filter(term %in% shift_vars) %>%
+    mutate(
+      term_pretty = names(shift_vars)[match(term, shift_vars)],
+      Sex="Male"
+    )
+  
+  mod_female2 <- mod_female %>%
+    filter(term %in% shift_vars) %>%
+    mutate(
+      term_pretty = names(shift_vars)[match(term, shift_vars)],
+      Sex="Female"
+    )
+  
+  or_all <- bind_rows(mod_male2, mod_female2)
+  
+  final_table <- group_summary %>%
+    left_join(or_all, by = c("Sex", "Shift_work" = "term_pretty"))
+  
+  
+  
+  
+  desired_row_order <- c("cases_display", "N_total", "formatted")
+  desired_col_order <- names(shift_vars)
+  
+  final_table %>%
+    arrange(Sex, Shift_work) %>%
+    mutate(
+      cases_display = paste0(N_cases, " (", sprintf("%.2f", case_percent), "%)")
+    ) %>%
+    select(Sex, Shift_work, cases_display, N_total, formatted) %>%
+    mutate(N_total=as.character(N_total)) %>%
+    pivot_longer(
+      !c(Sex,Shift_work),
+      names_to = "vars",
+      values_to = "vals"
+    ) %>%
+    mutate(vars = factor(vars, levels = desired_row_order)) %>%
+    pivot_wider(
+      names_from="Shift_work",
+      values_from="vals"
+    ) %>%
+    select(Sex,vars, "No shift work",all_of(desired_col_order)) %>%
+    arrange(vars)
+}
 
 
 # plot OR_table_df output -------------------------------------------------
