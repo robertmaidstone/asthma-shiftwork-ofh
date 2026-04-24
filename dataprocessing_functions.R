@@ -578,22 +578,17 @@ derive_prospective_vars <- function(data) {
 
 # filter out missing data -------------------------------------------------
 
-filter_missing_data <- function(data){
-  data <- data %>% 
-    filter(Sex%in%c("Female","Male"),
-           !is.na(Asthma_med),
-           !is.na(Shift_work),
-           !is.na(Age),
-           !(Shift_work %in% c("Prefer not to answer","Do not know")),
-           !(Ethnicity %in% c("Prefer not to answer","Do not know")),
-           !(Alcohol_status %in% c("Prefer not to answer","Do not know")),
-           !is.na(Days_walk),
-           !is.na(Days_mod),
-           !is.na(Days_vig),
-           !is.na(LengthWW),
-           !(Chronotype %in% c("Prefer not to answer","Do not know")),
-           !(Income %in% c("Prefer not to answer","Do not know")),
-           !(sleep_hrs_1_1 %in% c("Do not know","Prefer not to answer"))
+filter_missing_data <- function(data, vars) {
+  
+  # values to remove
+  bad_values <- c("Prefer not to answer", "Do not know")
+  
+  data %>%
+    # keep only Male/Female if Sex exists
+    { if("Sex" %in% names(.)) filter(., Sex %in% c("Male","Female")) else . } %>%
+    
+    # remove NA or bad values for all vars
+    filter(
+      if_all(all_of(vars), ~ !is.na(.) & !(. %in% bad_values))
     )
-  data
 }
