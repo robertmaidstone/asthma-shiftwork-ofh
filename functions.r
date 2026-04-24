@@ -216,6 +216,10 @@ plot_or <- function(or_table_1, or_table_2, var_names,
   # Add pretty labels
   df$label <- pretty_labels[match(df$term, var_codes)]
   
+  # Force ordering by var_names
+  df$term  <- factor(df$term,  levels = var_codes)
+  df$label <- factor(df$label, levels = pretty_labels)
+  
   # Add referent row (no CI, OR = 1)
   ref_row <- data.frame(
     term = "referent",
@@ -251,6 +255,7 @@ plot_or <- function(or_table_1, or_table_2, var_names,
     ylab("Odds Ratio") +
     xlab("") +
     scale_colour_manual(values = c("red", "black")) +
+    scale_x_discrete(breaks = df$term,labels = df$label) +
     theme(legend.position = c(0.9, 0.9),
           legend.background = element_blank())
 }
