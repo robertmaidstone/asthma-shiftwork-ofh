@@ -138,6 +138,11 @@ model_missing <- function(data, formula, subset = NULL) {
   }
   var_vec <- strsplit(formula,
                       split = "\\+|~")[[1]] |> trimws()
+  
+  if("Surv(followuptime, status)"%in% var_vec){
+    var_vec[var_vec=="Surv(followuptime, status)"]<-"status"
+    var_vec <- c("followuptime",var_vec)
+  }
   # per-variable missing counts
   missing_table <- data %>%
     summarise(across(all_of(var_vec), ~ sum(is.na(.)))) %>%
