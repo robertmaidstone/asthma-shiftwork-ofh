@@ -1,0 +1,7 @@
+dx download "R/dataprocessing.r"
+dx download "R/functions.r"
+
+dx download "part_data.csv"
+dx download "asthma_fo.csv"
+dx download "quest_data.csv"
+dx download "clinic_data.csv"
