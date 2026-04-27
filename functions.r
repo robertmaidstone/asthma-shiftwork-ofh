@@ -434,3 +434,65 @@ hr_table_out <- function(data, mod_male, mod_female,shift_vars) {
     select(Sex,vars, "No shift work",all_of(desired_col_order)) %>%
     arrange(vars)
 }
+
+plot_or2 <- function(or_tables, 
+                     var_names,
+                     group_names = NULL,
+                     referent_label = "Day workers (referent)",
+                     pd_width = 0.5) {
+  
+  # vars_named is a named vector: pretty_label = variable_name
+  pretty_labels <- names(var_names)
+  var_codes     <- unname(var_names)
+  
+  # If no group names provided, auto-generate
+  if (is.null(group_names)) {
+    group_names <- paste("Group", seq_along(or_tables))
+  }
+  
+  # Add group labels to each table
+  for (i in seq_along(or_tables)) {
+    or_tables[[i]]$Group <- group_names[i]
+  }
+  
+  # Combine all tables
+  df <- do.call(rbind, or_tables)
+  df$Group <- factor(df$Group, levels = group_names)
+  
+  # Filter to selected variables
+  df <- df[df$term %in% var_codes, ]
+  
+  # Add pretty labels
+  df$label <- pretty_labels[match(df$term, var_codes)]
+  
+  # Force ordering by var_names
+  df$term  <- factor(df$term,  levels = var_codes)
+  df$label <- factor(df$label, levels = pretty_labels)
+  
+  # Referent row (optional)
+  ref_row <- data.frame(
+    term = "referent",
+    OR   = 1,
+    LCL  = NA,
+    UCL  = NA,
+    formatted = NA,
+    Group = NA,
+    label = referent_label,
+    stringsAsFactors = FALSE
+  )
+  
+  # Plot
+  ggplot(df, aes(x = term, y = OR, colour = Group)) +
+    geom_hline(yintercept = 1, linetype = "dashed", size = 0.3) +
+    geom_errorbar(aes(ymin = LCL, ymax = UCL),
+                  width = 0.3,
+                  position = position_dodge(width = pd_width)) +
+    geom_point(position = position_dodge(width = pd_width), size = 2) +
+    coord_flip() +
+    theme_bw() +
+    ylab("Odds Ratio") +
+    xlab("") +
+    scale_x_discrete(breaks = df$term, labels = df$label) +
+    theme(legend.position = c(0.9, 0.9),
+          legend.background = element_blank())
+}
