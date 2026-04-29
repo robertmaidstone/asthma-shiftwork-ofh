@@ -397,9 +397,45 @@ hr_table_df <- function(data, formula, subset = NULL, digits = 2) {
 }
 
 
+# HR sex interation calc -----------------------------------------------------
+
+HR_sex_int<-function(data,model,var="Shift_work"){
+  #filter out data prior to baseline
+  
+  data <- data %>% dplyr::filter(is.na(asthma_beforebaseline)|!asthma_beforebaseline)
+  # Convert character to formula if needed
+
+  
+  
+  modela<-as.formula(paste(model,"+ Sex"))
+  modelb<-as.formula(paste(model,"+ Sex + ",var,"*Sex"))
+  
+  coxph(modela, data = data) -> mod2a
+  coxph(modelb, data = data)-> mod2b
+  
+  
+  logLik(mod2a) -> a
+  logLik(mod2b) -> b
+  
+  # Likelihood ratio test statistic
+  LR_stat <- 2 * (as.numeric(b) - as.numeric(a))
+  
+  # Degrees of freedom = difference in number of parameters
+  df <- attr(b, "df") - attr(a, "df")
+  
+  # p-value
+  p_value <- pchisq(LR_stat, df = df, lower.tail = FALSE)
+  p_value
+}
+
 # hr table out function -----------------------------------------------------
 
-hr_table_out <- function(data, mod_male, mod_female,shift_vars) {
+hr_table_out <- function(data, mod_male, mod_female,shift_vars,pval) {
+  
+  if(length(shift_vars)==1){
+    data<-data %>% mutate(Shift_work=Shift_work_b)
+  }
+  
   data <- data %>% dplyr::filter(is.na(asthma_beforebaseline)|!asthma_beforebaseline)
   
   sample_sizes <- data %>%
@@ -455,12 +491,15 @@ hr_table_out <- function(data, mod_male, mod_female,shift_vars) {
       names_to = "vars",
       values_to = "vals"
     ) %>%
+    mutate(
+      sex_interaction = ifelse(vars == "formatted", round(pval,4), "")
+    ) %>%
     mutate(vars = factor(vars, levels = desired_row_order)) %>%
     pivot_wider(
       names_from="Shift_work",
       values_from="vals"
     ) %>%
-    select(Sex,vars, "No shift work",all_of(desired_col_order)) %>%
+    select(Sex,vars, "No shift work",all_of(desired_col_order),sex_interaction) %>%
     arrange(vars)
 }
 
