@@ -198,6 +198,10 @@ or_table_df <- function(data, formula, subset = NULL, digits = 2) {
 # or table out function -----------------------------------------------------
 
 or_table_out <- function(data, mod_male, mod_female,shift_vars,pval) {
+  if(length(shift_vars)==1){
+    data<-data %>% mutate(Shift_work=Shift_work_b)
+  }
+  
   sample_sizes <- data %>%
     count(Sex, Shift_work, name = "N_total")
   
@@ -249,7 +253,7 @@ or_table_out <- function(data, mod_male, mod_female,shift_vars,pval) {
       values_to = "vals"
     ) %>%
     mutate(
-      sex_interaction = ifelse(vars == "formatted", round(pval,2), "")
+      sex_interaction = ifelse(vars == "formatted", round(pval,4), "")
     ) %>%
     mutate(vars = factor(vars, levels = desired_row_order)) %>%
     pivot_wider(
