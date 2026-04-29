@@ -197,7 +197,7 @@ or_table_df <- function(data, formula, subset = NULL, digits = 2) {
 
 # or table out function -----------------------------------------------------
 
-or_table_out <- function(data, mod_male, mod_female,shift_vars) {
+or_table_out <- function(data, mod_male, mod_female,shift_vars,pval) {
   sample_sizes <- data %>%
     count(Sex, Shift_work, name = "N_total")
   
@@ -233,9 +233,6 @@ or_table_out <- function(data, mod_male, mod_female,shift_vars) {
   final_table <- group_summary %>%
     left_join(or_all, by = c("Sex", "Shift_work" = "term_pretty"))
   
-  
-  
-  
   desired_row_order <- c("cases_display", "N_total", "formatted")
   desired_col_order <- names(shift_vars)
   
@@ -251,15 +248,43 @@ or_table_out <- function(data, mod_male, mod_female,shift_vars) {
       names_to = "vars",
       values_to = "vals"
     ) %>%
+    mutate(
+      sex_interaction = ifelse(vars == "formatted", round(pval,2), "")
+    ) %>%
     mutate(vars = factor(vars, levels = desired_row_order)) %>%
     pivot_wider(
       names_from="Shift_work",
       values_from="vals"
     ) %>%
-    select(Sex,vars, "No shift work",all_of(desired_col_order)) %>%
-    arrange(vars)
+    select(Sex,vars, "No shift work",all_of(desired_col_order),sex_interaction) %>%
+    arrange(vars) 
 }
 
+
+# sex interation calc -----------------------------------------------------
+
+OR_sex_int<-function(data,model,var="Shift_work"){
+  
+  modela<-paste(model,"+ Sex")
+  modelb<-paste(model,"+ Sex + ",var,"*Sex")
+  
+  glm(data=data,formula=modela,family = binomial(link="logit")) -> mod2a
+  glm(data=data,formula=modelb,family = binomial(link="logit")) -> mod2b
+  
+  
+  logLik(mod2a) -> a
+  logLik(mod2b) -> b
+  
+  # Likelihood ratio test statistic
+  LR_stat <- 2 * (as.numeric(b) - as.numeric(a))
+  
+  # Degrees of freedom = difference in number of parameters
+  df <- attr(b, "df") - attr(a, "df")
+  
+  # p-value
+  p_value <- pchisq(LR_stat, df = df, lower.tail = FALSE)
+  p_value
+}
 
 # plot OR_table_df output -------------------------------------------------
 
@@ -496,3 +521,12 @@ plot_or2 <- function(or_tables,
     theme(legend.position = c(0.9, 0.9),
           legend.background = element_blank())
 }
+
+
+
+
+
+
+
+
+
