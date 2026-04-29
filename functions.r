@@ -290,6 +290,29 @@ OR_sex_int<-function(data,model,var="Shift_work"){
   p_value
 }
 
+# LRT variable  -----------------------------------------------------
+
+OR_LRT_variable<-function(data,model1,model2){
+  
+  
+  glm(data=data,formula=model1,family = binomial(link="logit")) -> mod2a
+  glm(data=data,formula=model2,family = binomial(link="logit")) -> mod2b
+  
+  
+  logLik(mod2a) -> a
+  logLik(mod2b) -> b
+  
+  # Likelihood ratio test statistic
+  LR_stat <- 2 * (as.numeric(b) - as.numeric(a))
+  
+  # Degrees of freedom = difference in number of parameters
+  df <- attr(b, "df") - attr(a, "df")
+  
+  # p-value
+  p_value <- pchisq(LR_stat, df = df, lower.tail = FALSE)
+  p_value
+}
+
 # plot OR_table_df output -------------------------------------------------
 
 plot_or <- function(or_table_1, or_table_2, var_names,
