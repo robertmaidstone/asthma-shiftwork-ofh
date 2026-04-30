@@ -614,7 +614,26 @@ df_logistic <- function(formula, data) {
 
 
 
+df_cox <- function(formula, data) {
+  m <- model.matrix(as.formula(formula), data = data)
+  n <- nrow(data)
+  # remove intercept if present
+  if ("(Intercept)" %in% colnames(m)) {
+    m <- m[, colnames(m) != "(Intercept)", drop = FALSE]
+  }
+  k <- ncol(m)
+  list(
+    n = n,
+    parameters = k,
+    model_df = k   # df for LR, Wald, Score tests
+  )
+}
 
 
-
-
+csv_table_out_cox<-function(mod_out,model,data,group,var){
+  df_cox(model, data = data)-> df_o
+  var_levs = data %>% dplyr::select(any_of(var)) %>% unique %>% dim %>% .[1]
+  cbind(mod_out[1:var_levs,] %>% mutate(n=df_o$n,parameters=df_o$parameters,model_df=df_o$model_df),
+        (data %>%
+           dplyr::select(var,Asthma_med2) %>% table %>% as.data.frame() %>% pivot_wider(names_from="Asthma_med2",values_from="Freq"))[1:var_levs,2:3],Group=group)
+}
