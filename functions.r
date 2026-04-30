@@ -427,7 +427,7 @@ HR_sex_int<-function(data,model,var="Shift_work"){
   
   data <- data %>% dplyr::filter(is.na(asthma_beforebaseline)|!asthma_beforebaseline)
   # Convert character to formula if needed
-
+  
   
   
   modela<-as.formula(paste(model,"+ Sex"))
@@ -588,7 +588,29 @@ plot_or2 <- function(or_tables,
           legend.background = element_blank())
 }
 
+csv_table_out<-function(mod_out,model,data,group,var){
+  df_logistic(model, data = data)-> df_o
+  var_levs = data %>% dplyr::select(any_of(var)) %>% unique %>% dim %>% .[1]
+  cbind(mod_out[1:var_levs,] %>% mutate(n=df_o$n,parameters=df_o$parameters,residual_df=df_o$residual_df,model_df=df_o$model_df),
+        (data %>%
+           dplyr::select(var,Asthma_med2) %>% table %>% as.data.frame() %>% pivot_wider(names_from="Asthma_med2",values_from="Freq"))[1:var_levs,2:3],Group=group)
+}
 
+count_params <- function(formula, data) {
+  m <- model.matrix(as.formula(formula), data = data)
+  ncol(m)   # number of parameters including intercept
+}
+
+df_logistic <- function(formula, data) {
+  k <- count_params(formula, data)
+  n <- nrow(data)
+  list(
+    n = n,
+    parameters = k,
+    residual_df = n - k,
+    model_df = k - 1
+  )
+}
 
 
 
