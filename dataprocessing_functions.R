@@ -587,7 +587,10 @@ filter_missing_data <- function(data, vars) {
   
   # values to remove
   bad_values <- c("Prefer not to answer", "Do not know")
-  
+  if("Surv(followuptime, status)"%in% vars){
+    vars[vars=="Surv(followuptime, status)"]<-"status"
+    vars <- c("followuptime",vars)
+  }
   data %>%
     # keep only Male/Female if Sex exists
     { if("Sex" %in% names(.)) filter(., Sex %in% c("Male","Female")) else . } %>%
