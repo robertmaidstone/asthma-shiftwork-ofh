@@ -9,6 +9,8 @@ source("~/OurFutureHealth/ofh-shiftwork/plotting_functions.R")
 make_shiftwork_table("OurFutureHealth/OFHresults/P_SW.xlsx")
 make_shiftwork_table("OurFutureHealth/OFHresults/CS_SW.xlsx")
 
+make_shiftwork_table("OurFutureHealth/OFHresults/CS_SW_model2vars.xlsx")
+
 # Export to Word
 read_docx() %>% 
   body_add_flextable(make_shiftwork_table("OurFutureHealth/OFHresults/P_SW.xlsx")) %>%

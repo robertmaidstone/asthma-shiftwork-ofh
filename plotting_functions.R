@@ -292,8 +292,9 @@ make_shiftwork_table <- function(filename) {
   
   supp_table_combined <- cbind(
     supp_table,
-    "Sex-shift work interaction" = c("", "", sex_int$sex_interaction)
-  )
+    "Sex-shift work interaction" = c("", "", sprintf("%.2f", sex_int$sex_interaction))
+  ) %>%
+    mutate(`Sex-shift work interaction`=ifelse(`Sex-shift work interaction`>=0.01| `Sex-shift work interaction`=="",`Sex-shift work interaction`,"p<0.01"))
   
   # -----------------------------
   # 6. Relabel rows + reorder
@@ -338,5 +339,14 @@ make_shiftwork_table <- function(filename) {
     }
   }
   
+  ft <- align(
+    ft,
+    i = 1:nrow(ft$body$dataset),   # body rows only
+    j = 2:5,                       # columns 2–5
+    align = "center",
+    part = "body"
+  )
+  n_tab <- tidy %>% filter(vars=="N_total",model==1) %>% dplyr::select(value) %>% unlist %>% as.numeric() %>% sum()
+  ft <- add_header_lines(ft, values = paste(filename,"### n=",n_tab))
   ft
 }
