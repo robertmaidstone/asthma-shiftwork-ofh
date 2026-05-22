@@ -218,3 +218,125 @@ plot_ORb <- function(file,p_val=TRUE){
 }
 
 
+make_shiftwork_table <- function(filename) {
+  
+  # -----------------------------
+  # 1. Read + clean
+  # -----------------------------
+  df <- read_excel(filename, sheet = 1)
+  df <- janitor::clean_names(df)
+  
+  # -----------------------------
+  # 2. Long → tidy
+  # -----------------------------
+  tidy <- df %>%
+    pivot_longer(
+      cols = c(no_shift_work, never_rarely, sometimes, always),
+      names_to = "shift_category",
+      values_to = "value"
+    )
+  
+  # -----------------------------
+  # 3. Wide table by model/sex
+  # -----------------------------
+  supp_table <- tidy %>%
+    mutate(
+      shift_category = recode(
+        shift_category,
+        "no_shift_work" = "Day workers",
+        "never_rarely" = "Shift work, but never/rarely nights",
+        "sometimes" = "Irregular shift work including nights",
+        "always" = "Permanent night shift work"
+      )
+    ) %>%
+    pivot_wider(
+      id_cols = c(model, sex, vars),
+      names_from = shift_category,
+      values_from = value
+    ) %>%
+    arrange(model, sex, vars)
+  
+  # -----------------------------
+  # 4. Combine Female + Male rows
+  # -----------------------------
+  supp_table <- supp_table %>%
+    mutate(
+      `Day workers` = ifelse(
+        vars %in% c("cases_display", "N_total"),
+        `Day workers`,
+        paste(sex, "referent")
+      )
+    ) %>%
+    group_by(model, vars) %>%
+    summarise(
+      across(
+        c(
+          `Day workers`,
+          `Shift work, but never/rarely nights`,
+          `Irregular shift work including nights`,
+          `Permanent night shift work`
+        ),
+        ~ paste(.x, collapse = "\n")
+      ),
+      .groups = "drop"
+    ) %>%
+    filter(model == 1 | vars == "formatted")
+  
+  # -----------------------------
+  # 5. Add sex‑interaction column
+  # -----------------------------
+  sex_int <- tidy %>%
+    filter(!is.na(sex_interaction)) %>%
+    select(model, sex_interaction) %>%
+    distinct()
+  
+  supp_table_combined <- cbind(
+    supp_table,
+    "Sex-shift work interaction" = c("", "", sex_int$sex_interaction)
+  )
+  
+  # -----------------------------
+  # 6. Relabel rows + reorder
+  # -----------------------------
+  supp_table_combined <- supp_table_combined %>%
+    mutate(
+      vars = case_when(
+        vars == "N_total" ~ "Total sample size",
+        vars == "cases_display" ~ "Total cases (% of\ntotal sample size)",
+        vars == "formatted" & model == 1 ~ "Model 1: Age and\n ethnicity-adjusted",
+        vars == "formatted" & model == 2 ~ "Model 2: Multivariable-\nadjusted",
+        vars == "formatted" & model == 3 ~ "Model 3: Model 2\ncovariates +\npotential\nmoderators"
+      )
+    ) %>%
+    slice(2, 1, 3:5) %>%
+    select(-model)
+  
+  # -----------------------------
+  # 7. Build flextable
+  # -----------------------------
+  ft <- flextable(supp_table_combined)
+  
+  # -----------------------------
+  # 8. Apply two‑line colouring
+  # -----------------------------
+  for (j in 2:5) {
+    for (i in 1:5) {
+      
+      vals <- supp_table_combined[i, j] %>%
+        str_split("\n") %>%
+        unlist()
+      
+      ft <- mk_par(
+        ft,
+        i = i,
+        j = j,
+        value = as_paragraph(
+          as_chunk(paste0(vals[1], "\n"), props = fp_text(color = "black")),
+          as_chunk(vals[2], props = fp_text(color = "red"))
+        )
+      )
+    }
+  }
+  
+  ft
+}
