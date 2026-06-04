@@ -29,6 +29,9 @@ model3vars_labels <- c(
 )
 make_shiftwork_table("OurFutureHealth/OFHresults/CS_SW_model3vars.xlsx",model_labels = model3vars_labels)
 
+make_shiftwork_table("OurFutureHealth/OFHresults/CS_SW_age_q1.xlsx")
+
+
 # Export to Word
 read_docx() %>% 
   body_add_flextable(make_shiftwork_table("OurFutureHealth/OFHresults/P_SW.xlsx")) %>%
@@ -38,4 +41,9 @@ read_docx() %>%
   body_add_flextable(make_shiftwork_table("OurFutureHealth/OFHresults/CS_SW_model2vars.xlsx",model_labels = model2vars_labels)) %>%
   body_add_break() %>%
   body_add_flextable(make_shiftwork_table("OurFutureHealth/OFHresults/CS_SW_model3vars.xlsx",model_labels = model3vars_labels)) %>%
+  body_add_break() %>%
+  body_add_flextable(make_shiftwork_table("OurFutureHealth/OFHresults/CS_SW_age_q1.xlsx")) %>%
+  body_add_flextable(make_shiftwork_table("OurFutureHealth/OFHresults/CS_SW_age_q2.xlsx")) %>%
+  body_add_flextable(make_shiftwork_table("OurFutureHealth/OFHresults/CS_SW_age_q3.xlsx")) %>%
+  body_add_flextable(make_shiftwork_table("OurFutureHealth/OFHresults/CS_SW_age_q4.xlsx")) %>%
   print(target = "OurFutureHealth/raw_ft_tables.docx")
