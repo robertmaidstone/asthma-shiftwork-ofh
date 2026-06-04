@@ -218,7 +218,12 @@ plot_ORb <- function(file,p_val=TRUE){
 }
 
 
-make_shiftwork_table <- function(filename) {
+make_shiftwork_table <- function(filename,
+                                 model_labels = c(
+                                   "1" = "Model 1: Age and\nethnicity-adjusted",
+                                   "2" = "Model 2: Multivariable-\nadjusted",
+                                   "3" = "Model 3: Model 2\ncovariates +\npotential\nmoderators"
+                                 )) {
   
   # -----------------------------
   # 1. Read + clean
@@ -226,6 +231,7 @@ make_shiftwork_table <- function(filename) {
   df <- read_excel(filename, sheet = 1)
   df <- janitor::clean_names(df)
   
+  df
   # -----------------------------
   # 2. Long → tidy
   # -----------------------------
@@ -259,6 +265,8 @@ make_shiftwork_table <- function(filename) {
   # -----------------------------
   # 4. Combine Female + Male rows
   # -----------------------------
+  model_int <- supp_table$model[1]
+  
   supp_table <- supp_table %>%
     mutate(
       `Day workers` = ifelse(
@@ -280,7 +288,7 @@ make_shiftwork_table <- function(filename) {
       ),
       .groups = "drop"
     ) %>%
-    filter(model == 1 | vars == "formatted")
+    filter(model == model_int | vars == "formatted")
   
   # -----------------------------
   # 5. Add sex‑interaction column
@@ -299,17 +307,18 @@ make_shiftwork_table <- function(filename) {
   # -----------------------------
   # 6. Relabel rows + reorder
   # -----------------------------
+  
+  names(model_labels) <- paste0("formatted_",names(model_labels))
+  
   supp_table_combined <- supp_table_combined %>%
     mutate(
       vars = case_when(
         vars == "N_total" ~ "Total sample size",
         vars == "cases_display" ~ "Total cases (% of\ntotal sample size)",
-        vars == "formatted" & model == 1 ~ "Model 1: Age and\n ethnicity-adjusted",
-        vars == "formatted" & model == 2 ~ "Model 2: Multivariable-\nadjusted",
-        vars == "formatted" & model == 3 ~ "Model 3: Model 2\ncovariates +\npotential\nmoderators"
+        vars == "formatted" ~ model_labels[paste0(vars, "_", model)]
       )
     ) %>%
-    slice(2, 1, 3:5) %>%
+    slice(2, 1, 3:n()) %>%
     select(-model)
   
   # -----------------------------
@@ -320,8 +329,8 @@ make_shiftwork_table <- function(filename) {
   # -----------------------------
   # 8. Apply two‑line colouring
   # -----------------------------
-  for (j in 2:5) {
-    for (i in 1:5) {
+  for (j in 2:5) {  # columns 2–5
+    for (i in 1:nrow(ft$body$dataset)) {
       
       vals <- supp_table_combined[i, j] %>%
         str_split("\n") %>%
@@ -346,7 +355,7 @@ make_shiftwork_table <- function(filename) {
     align = "center",
     part = "body"
   )
-  n_tab <- tidy %>% filter(vars=="N_total",model==1) %>% dplyr::select(value) %>% unlist %>% as.numeric() %>% sum()
+  n_tab <- tidy %>% filter(vars=="N_total",model==model_int) %>% dplyr::select(value) %>% unlist %>% as.numeric() %>% sum()
   ft <- add_header_lines(ft, values = paste(filename,"### n=",n_tab))
   ft
 }
