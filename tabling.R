@@ -31,7 +31,6 @@ make_shiftwork_table("OurFutureHealth/OFHresults/CS_SW_model3vars.xlsx",model_la
 
 make_shiftwork_table("OurFutureHealth/OFHresults/CS_SW_age_q1.xlsx")
 
-
 # Export to Word
 read_docx() %>% 
   body_add_flextable(make_shiftwork_table("OurFutureHealth/OFHresults/P_SW.xlsx")) %>%
