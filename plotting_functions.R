@@ -1,6 +1,6 @@
 
 
-plot_OR <- function(file,p_val=TRUE){
+plot_OR <- function(file,p_val=TRUE,y_lim=NULL,p_val_loc=NULL,y_lab_text=NULL){
   
   shift_vars <- rev(c(
    "No shift work"= "Day workers (referent)",
@@ -9,7 +9,7 @@ plot_OR <- function(file,p_val=TRUE){
     "Always"="Permanent night shift\nwork",
    "Shift work"="Shift workers"
   ))
-  cbPalette <- c("red","black")
+  cbPalette <- c("black","red")
   pd_width <- 0.6
   
   readxl::read_xlsx(file) -> plot_data
@@ -29,7 +29,13 @@ plot_OR <- function(file,p_val=TRUE){
     mutate(OR=ifelse(`Shift work`=="No shift work",1,OR)) %>%
     mutate(`Shift work`=factor(recode(`Shift work`,!!!shift_vars),levels=unname(shift_vars),ordered=TRUE))
   
-  y_lim <- c(0.975*min(clean_data$LCI,na.rm=T),max(clean_data$UCI,na.rm=T)*1.025)
+  if(is.null(y_lim)){
+    y_lim <- c(0.975*min(clean_data$LCI,na.rm=T),max(clean_data$UCI,na.rm=T)*1.025)
+  }
+  
+  if(is.null(y_lab_text)){
+  y_lab_text<-"Adjusted odds ratio\nof medicated asthma"
+  }
   
   plots<-list()
   
@@ -47,7 +53,7 @@ plot_OR <- function(file,p_val=TRUE){
       theme(axis.title.y = element_blank(),
             legend.position=c(0.85, 0.925),
             legend.background = element_blank())+
-      ylab("Adjusted odds ratio\nof medicated asthma") +
+      ylab(y_lab_text) +
       ylim(y_lim) +
       coord_flip() +
       scale_colour_manual(
@@ -63,8 +69,13 @@ plot_OR <- function(file,p_val=TRUE){
         unique()
       
       pval_text <- ifelse(pval < 0.0001, "p<0.0001", paste0("p=", pval))
-      y_pos <- (1-y_lim[1])/4 +y_lim[1]
-      x_pos <- length(unique(clean_data$`Shift work`)) +.25
+      if(is.null(p_val_loc)){
+        y_pos <- (1-y_lim[1])/4 +y_lim[1]
+        x_pos <- length(unique(clean_data$`Shift work`)) +.25
+      }else{
+        y_pos <- p_val_loc[2]
+        x_pos <- p_val_loc[1]
+      }
       
       p_mod <- p_mod +
         annotate("text",
