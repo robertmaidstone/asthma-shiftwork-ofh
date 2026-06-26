@@ -234,7 +234,34 @@ make_shiftwork_table <- function(filename,
                                    "1" = "Model 1: Age and\nethnicity-adjusted",
                                    "2" = "Model 2: Multivariable-\nadjusted",
                                    "3" = "Model 3: Model 2\ncovariates +\npotential\nmoderators"
-                                 )) {
+                                 ),
+                                 SWb=FALSE) {
+  
+  SW_cats_in <- c(
+    "no_shift_work",
+    "never_rarely",
+    "sometimes",
+    "always"
+  )
+  
+  SW_cats_out <-  c(
+    "Day workers",
+    "Shift work, but never/rarely nights",
+    "Irregular shift work including nights",
+    "Permanent night shift work"
+  )
+  if(SWb==TRUE){
+    SW_cats_in <- c(
+      "no_shift_work",
+      "shift_work"
+    )
+    
+    SW_cats_out <-  c(
+      "Day workers",
+      "Shift workers"
+    )
+  }
+  
   
   # -----------------------------
   # 1. Read + clean
@@ -248,7 +275,7 @@ make_shiftwork_table <- function(filename,
   # -----------------------------
   tidy <- df %>%
     pivot_longer(
-      cols = c(no_shift_work, never_rarely, sometimes, always),
+      cols = all_of(SW_cats_in),
       names_to = "shift_category",
       values_to = "value"
     )
@@ -256,15 +283,11 @@ make_shiftwork_table <- function(filename,
   # -----------------------------
   # 3. Wide table by model/sex
   # -----------------------------
+  names(SW_cats_out) <- SW_cats_in
+  
   supp_table <- tidy %>%
     mutate(
-      shift_category = recode(
-        shift_category,
-        "no_shift_work" = "Day workers",
-        "never_rarely" = "Shift work, but never/rarely nights",
-        "sometimes" = "Irregular shift work including nights",
-        "always" = "Permanent night shift work"
-      )
+      shift_category = recode(shift_category, !!!SW_cats_out)
     ) %>%
     pivot_wider(
       id_cols = c(model, sex, vars),
@@ -289,12 +312,7 @@ make_shiftwork_table <- function(filename,
     group_by(model, vars) %>%
     summarise(
       across(
-        c(
-          `Day workers`,
-          `Shift work, but never/rarely nights`,
-          `Irregular shift work including nights`,
-          `Permanent night shift work`
-        ),
+        all_of(SW_cats_out),
         ~ paste(.x, collapse = "\n")
       ),
       .groups = "drop"
@@ -340,7 +358,7 @@ make_shiftwork_table <- function(filename,
   # -----------------------------
   # 8. Apply two‑line colouring
   # -----------------------------
-  for (j in 2:5) {  # columns 2–5
+  for (j in 2:(length(SW_cats_out)+1)) {  # columns 2–5
     for (i in 1:nrow(ft$body$dataset)) {
       
       vals <- supp_table_combined[i, j] %>%
@@ -362,7 +380,7 @@ make_shiftwork_table <- function(filename,
   ft <- align(
     ft,
     i = 1:nrow(ft$body$dataset),   # body rows only
-    j = 2:5,                       # columns 2–5
+    j = 2:(length(SW_cats_out)+1),                       # columns 2–5
     align = "center",
     part = "body"
   )

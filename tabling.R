@@ -31,6 +31,8 @@ make_shiftwork_table("OurFutureHealth/OFHresults/CS_SW_model3vars.xlsx",model_la
 
 make_shiftwork_table("OurFutureHealth/OFHresults/CS_SW_age_q1.xlsx")
 
+make_shiftwork_table("OurFutureHealth/OFHresults/CS_SWb_eth_WB.xlsx")
+
 # Export to Word
 read_docx() %>% 
   body_add_flextable(make_shiftwork_table("OurFutureHealth/OFHresults/P_SW.xlsx")) %>%
@@ -45,4 +47,11 @@ read_docx() %>%
   body_add_flextable(make_shiftwork_table("OurFutureHealth/OFHresults/CS_SW_age_q2.xlsx")) %>%
   body_add_flextable(make_shiftwork_table("OurFutureHealth/OFHresults/CS_SW_age_q3.xlsx")) %>%
   body_add_flextable(make_shiftwork_table("OurFutureHealth/OFHresults/CS_SW_age_q4.xlsx")) %>%
+  body_add_flextable(make_shiftwork_table("OurFutureHealth/OFHresults/CS_SWb_eth_WB.xlsx",SWb=TRUE)) %>%
+  body_add_flextable(make_shiftwork_table("OurFutureHealth/OFHresults/CS_SWb_eth_WO.xlsx",SWb=TRUE)) %>%
+  body_add_flextable(make_shiftwork_table("OurFutureHealth/OFHresults/CS_SWb_eth_Other.xlsx",SWb=TRUE)) %>%
+  body_add_flextable(make_shiftwork_table("OurFutureHealth/OFHresults/CS_SWb_eth_Mixed.xlsx",SWb=TRUE)) %>%
+  body_add_flextable(make_shiftwork_table("OurFutureHealth/OFHresults/CS_SWb_eth_A.xlsx",SWb=TRUE)) %>%
+  body_add_flextable(make_shiftwork_table("OurFutureHealth/OFHresults/CS_SWb_eth_Black.xlsx",SWb=TRUE)) %>%
+  body_add_flextable(make_shiftwork_table("OurFutureHealth/OFHresults/CS_SWb_eth_Chinese.xlsx",SWb=TRUE)) %>%
   print(target = "OurFutureHealth/raw_ft_tables.docx")
