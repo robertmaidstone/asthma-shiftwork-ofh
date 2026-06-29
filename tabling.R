@@ -54,4 +54,10 @@ read_docx() %>%
   body_add_flextable(make_shiftwork_table("OurFutureHealth/OFHresults/CS_SWb_eth_A.xlsx",SWb=TRUE)) %>%
   body_add_flextable(make_shiftwork_table("OurFutureHealth/OFHresults/CS_SWb_eth_Black.xlsx",SWb=TRUE)) %>%
   body_add_flextable(make_shiftwork_table("OurFutureHealth/OFHresults/CS_SWb_eth_Chinese.xlsx",SWb=TRUE)) %>%
+  
+  body_add_flextable(make_shiftwork_table("OurFutureHealth/OFHresults/CS_SWb_income_LT18.xlsx",SWb=TRUE)) %>%
+  body_add_flextable(make_shiftwork_table("OurFutureHealth/OFHresults/CS_SWb_income_18-30.xlsx",SWb=TRUE)) %>%
+  body_add_flextable(make_shiftwork_table("OurFutureHealth/OFHresults/CS_SWb_income_31-52.xlsx",SWb=TRUE)) %>%
+  body_add_flextable(make_shiftwork_table("OurFutureHealth/OFHresults/CS_SWb_income_53-100.xlsx",SWb=TRUE)) %>%
+  body_add_flextable(make_shiftwork_table("OurFutureHealth/OFHresults/CS_SWb_income_GT100.xlsx",SWb=TRUE)) %>%
   print(target = "OurFutureHealth/raw_ft_tables.docx")
