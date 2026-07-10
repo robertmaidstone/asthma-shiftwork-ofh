@@ -10,6 +10,12 @@ ggsave(plot = tt[[1]], filename="OurFutureHealth/ofh-shiftwork/plots/CS_SW_m1.pn
 ggsave(plot = tt[[2]], filename="OurFutureHealth/ofh-shiftwork/plots/CS_SW_m2.png",width=5,height=4)
 ggsave(plot = tt[[3]], filename="OurFutureHealth/ofh-shiftwork/plots/CS_SW_m3.png",width=5,height=4)
 
+tt <- plot_OR("~/OurFutureHealth/OFHresults/CS_SWb.xlsx")
+
+ggsave(plot = tt[[1]], filename="OurFutureHealth/ofh-shiftwork/plots/CS_SWb_m1.png",width=3.75,height=2)
+ggsave(plot = tt[[2]], filename="OurFutureHealth/ofh-shiftwork/plots/CS_SWb_m2.png",width=3.75,height=2)
+ggsave(plot = tt[[3]], filename="OurFutureHealth/ofh-shiftwork/plots/CS_SWb_m3.png",width=3.75,height=2)
+
 tt <- plot_OR("~/OurFutureHealth/OFHresults/CS_fullmodels.xlsx")
 ggsave(plot = tt[[1]], filename="OurFutureHealth/ofh-shiftwork/plots/CS_SW_fulldata_m1.png",width=5,height=4)
 ggsave(plot = tt[[2]], filename="OurFutureHealth/ofh-shiftwork/plots/CS_SW_fulldata_m2.png",width=5,height=4)
@@ -25,9 +31,9 @@ ggsave(plot = tt[[3]], filename="OurFutureHealth/ofh-shiftwork/plots/P_SW_m3.png
 
 tt <- plot_OR("~/OurFutureHealth/OFHresults/P_SWb.xlsx")
 
-ggsave(plot = tt[[1]], filename="OurFutureHealth/ofh-shiftwork/plots/P_SWb_m1.png",width=5,height=4)
-ggsave(plot = tt[[2]], filename="OurFutureHealth/ofh-shiftwork/plots/P_SWb_m2.png",width=5,height=4)
-ggsave(plot = tt[[3]], filename="OurFutureHealth/ofh-shiftwork/plots/P_SWb_m3.png",width=5,height=4)
+ggsave(plot = tt[[1]], filename="OurFutureHealth/ofh-shiftwork/plots/P_SWb_m1.png",width=3.75,height=2)
+ggsave(plot = tt[[2]], filename="OurFutureHealth/ofh-shiftwork/plots/P_SWb_m2.png",width=3.75,height=2)
+ggsave(plot = tt[[3]], filename="OurFutureHealth/ofh-shiftwork/plots/P_SWb_m3.png",width=3.75,height=2)
 #prospective full data
 
 tt <- plot_OR("~/OurFutureHealth/OFHresults/P_SW_fullmodels.xlsx")
