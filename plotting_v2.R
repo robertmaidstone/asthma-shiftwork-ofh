@@ -155,13 +155,13 @@ ggsave(plot = tt[[3]], filename="OurFutureHealth/ofh-shiftwork/plots/CS_SW_age_4
 # Age binary --------------------------------------------------------------
 
 tt <- plot_OR("~/OurFutureHealth/OFHresults/CS_SWb_age_q1.xlsx")
-ggsave(plot = tt[[3]], filename="OurFutureHealth/ofh-shiftwork/plots/CS_SWb_age_1_m3.png",width=3.75,height=4)
+ggsave(plot = tt[[3]], filename="OurFutureHealth/ofh-shiftwork/plots/CS_SWb_age_1_m3.png",width=3.75,height=2)
 tt <- plot_OR("~/OurFutureHealth/OFHresults/CS_SWb_age_q2.xlsx")
-ggsave(plot = tt[[3]], filename="OurFutureHealth/ofh-shiftwork/plots/CS_SWb_age_2_m3.png",width=3.75,height=4)
+ggsave(plot = tt[[3]], filename="OurFutureHealth/ofh-shiftwork/plots/CS_SWb_age_2_m3.png",width=3.75,height=2)
 tt <- plot_OR("~/OurFutureHealth/OFHresults/CS_SWb_age_q3.xlsx")
-ggsave(plot = tt[[3]], filename="OurFutureHealth/ofh-shiftwork/plots/CS_SWb_age_3_m3.png",width=3.75,height=4)
+ggsave(plot = tt[[3]], filename="OurFutureHealth/ofh-shiftwork/plots/CS_SWb_age_3_m3.png",width=3.75,height=2)
 tt <- plot_OR("~/OurFutureHealth/OFHresults/CS_SWb_age_q4.xlsx")
-ggsave(plot = tt[[3]], filename="OurFutureHealth/ofh-shiftwork/plots/CS_SWb_age_4_m3.png",width=3.75,height=4)
+ggsave(plot = tt[[3]], filename="OurFutureHealth/ofh-shiftwork/plots/CS_SWb_age_4_m3.png",width=3.75,height=2)
 
 
 # Ethnicity --------------------------------------------------------------
