@@ -68,7 +68,7 @@ plot_OR <- function(file,p_val=TRUE,y_lim=NULL,p_val_loc=NULL,y_lab_text=NULL){
         pull(sex_interaction) %>%
         unique()
       
-      pval_text <- ifelse(pval < 0.01, "p<0.01", paste0("p=", round(pval,2)))
+      pval_text <- ifelse(pval < 0.01, "p<0.01", paste0("p=", formatC(pval,format="f",digits=2)))
       if(is.null(p_val_loc)){
         y_pos <- (1-y_lim[1])/4 +y_lim[1]
         x_pos <- length(unique(clean_data$`Shift work`)) +.25
