@@ -29,7 +29,7 @@ ggsave(plot = tt[[1]], filename="OurFutureHealth/ofh-shiftwork/plots/P_SW_m1.png
 ggsave(plot = tt[[2]], filename="OurFutureHealth/ofh-shiftwork/plots/P_SW_m2.png",width=5,height=4)
 ggsave(plot = tt[[3]], filename="OurFutureHealth/ofh-shiftwork/plots/P_SW_m3.png",width=5,height=4)
 
-tt <- plot_OR("~/OurFutureHealth/OFHresults/P_SWb.xlsx")
+tt <- plot_OR("~/OurFutureHealth/OFHresults/P_SWb.xlsx",p_val_loc=c(2.3,1.1))
 
 ggsave(plot = tt[[1]], filename="OurFutureHealth/ofh-shiftwork/plots/P_SWb_m1.png",width=3.75,height=2)
 ggsave(plot = tt[[2]], filename="OurFutureHealth/ofh-shiftwork/plots/P_SWb_m2.png",width=3.75,height=2)
