@@ -1,6 +1,7 @@
 data/
 plots/
 plots_m2/
+plots_thorax/
 .Rproj.user
 .Rhistory
 README.html
