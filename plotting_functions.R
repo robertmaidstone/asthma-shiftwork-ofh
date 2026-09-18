@@ -91,6 +91,172 @@ plot_OR <- function(file,p_val=TRUE,y_lim=NULL,p_val_loc=NULL,y_lab_text=NULL){
 
 
 
+plot_OR_together <- function(files,labels,groups,p_val=TRUE,y_lim=NULL,p_val_loc=NULL,y_lab_text=NULL){
+  
+  shift_vars <- rev(c(
+    "No shift work"= "Day workers (referent)",
+    "Never/rarely"="Shift work, but never or\nrarely night shifts",
+    "Sometimes"="Irregular shift work\nincluding nights",
+    "Always"="Permanent night shift\nwork",
+    "Shift work"="Shift workers"
+  ))
+  cbPalette <- c("black","red")
+  pd_width <- 0.6
+  
+  plot_data_m<- data.frame()
+  
+  for(i in 1:length(files)){
+    readxl::read_xlsx(files[[i]]) -> plot_data
+    plot_data %>% filter(model==2,vars=="formatted") %>% 
+      mutate(label=labels[i],
+             group=groups[i]) %>%
+      rbind(plot_data_m) -> plot_data_m
+  }
+  plot_data_m <- plot_data_m %>% mutate(label=factor(label,ordered=T,levels=rev(unique(labels))))
+  clean_data <- plot_data_m %>%
+    dplyr::select(-vars,-sex_interaction) %>%
+    pivot_longer(cols = -c(model,Sex,label),
+                 names_to="Shift work",
+                 values_to="values") %>%
+    separate(values,
+             into=c("OR","LCI","UCI"),
+             sep="[()\\– ]+",
+             convert=TRUE,
+             extra="drop",
+             fill="right") %>%
+    mutate(OR=ifelse(`Shift work`=="No shift work",1,OR)) %>%
+    mutate(`Shift work`=factor(recode(`Shift work`,!!!shift_vars),levels=unname(shift_vars),ordered=TRUE)) %>%
+    filter(`Shift work`=="Shift workers")%>%
+    mutate(OR=as.numeric(OR))
+  
+  group_bounds <- plot_data_m %>%
+    distinct(label, group) %>%
+    arrange(label) %>%
+    group_by(group) %>%
+    summarise(
+      x_pos = which(levels(clean_data$label) %in% label)[1] - 0.5
+    )
+  
+  group_labs <- rbind(data.frame(group="top",x_pos=NA),group_bounds,data.frame(group="bottom",x_pos=NA)) %>% 
+    mutate(x_pos_labs=c(15,13.5,8,3,1),
+           txt_col=ifelse(is.na(x_pos),"blank","black"))
+
+  if(is.null(y_lim)){
+    y_lim <- c(0.975*min(clean_data$LCI,na.rm=T),max(clean_data$UCI,na.rm=T)*1.025)
+  }
+  
+  if(is.null(y_lab_text)){
+    y_lab_text<-"Adjusted odds ratio\nof medicated asthma"
+  }
+  
+  plots<-list()
+  
+  for(i in unique(clean_data$model)){
+    
+    p_mod<- clean_data %>% 
+      filter(model==i) %>%
+      ggplot(aes(y=OR,x=label,colour=Sex)) + 
+      geom_hline(aes(yintercept = 1), linewidth = .25, linetype = "dashed") +
+      geom_errorbar(aes(ymax = UCI, ymin = LCI),
+                    linewidth = .5, width = .4,
+                    position = position_dodge(width = pd_width)) +
+      geom_point(position = position_dodge(width = pd_width)) + 
+      theme_classic() +
+      theme(axis.title.y = element_blank(),
+            legend.position=c(0.08, 0.925),
+            legend.background = element_blank())+
+      ylab(y_lab_text) +
+      #ylim(y_lim) +
+      coord_cartesian(ylim = y_lim, clip = "off") + 
+      coord_flip(clip="off") +
+      scale_colour_manual(
+        values = cbPalette,
+        name = "",
+        guide = guide_legend(reverse=TRUE)
+      )
+    
+    p_mod <- p_mod +
+      geom_vline(
+        data = group_bounds[-dim(group_bounds)[1],],
+        aes(xintercept = x_pos),
+        linetype = "solid",
+        colour = "grey70",
+        linewidth = 0.5,
+        inherit.aes = FALSE
+      )
+    
+    # if (p_val) {
+    #   pval <- plot_data_m %>%
+    #     filter(model == i, !is.na(sex_interaction)) %>%
+    #     group_by(label) %>%
+    #     dplyr::select(label,sex_interaction) %>%
+    #     unique()
+    #   
+    #   pval<-pval %>% mutate(pval_text = ifelse(sex_interaction < 0.01, "p<0.01", paste0("p=", formatC(sex_interaction,format="f",digits=2)))) %>%
+    #     mutate(y_pos=y_lim[2]+.2)
+    # 
+    #   p_mod <- p_mod +
+    #     geom_text(data=pval,
+    #              aes(x = label,
+    #              y = y_pos,
+    #              label = pval_text),
+    #              inherit.aes = FALSE)
+      
+    
+    plots[[as.character(i)]] <- p_mod
+   
+    
+    pval <- plot_data_m %>%
+      filter(model == i, !is.na(sex_interaction)) %>%
+      group_by(label) %>%
+      dplyr::select(label,sex_interaction) %>%
+      unique()
+    
+    pval<-pval %>% mutate(pval_text = ifelse(sex_interaction < 0.01, "'p<0.01'", paste0("'p=", formatC(sex_interaction,format="f",digits=2),"'")),
+                          label_fmt = ifelse(sex_interaction < 0.05,
+                                             paste0("bold(",pval_text,")"),paste0(pval_text))) %>%
+      mutate(y_pos=y_lim[2]+.2)
+    
+    p_mod_p <- ggplot() +
+      geom_text(data=pval,
+                aes(x = label,
+                    y = y_pos,
+                    label = label_fmt),
+                parse=TRUE,
+                inherit.aes = FALSE) +
+      theme_void() +
+      theme(axis.title.y = element_blank(),
+            legend.background = element_blank())+
+      ylab(y_lab_text) +
+      coord_cartesian(ylim = y_lim, clip = "off") + 
+      coord_flip(clip="off") 
+    
+    p_mod_groups <- ggplot() +
+      geom_text(data=group_labs,
+                aes(x = x_pos_labs,
+                    y = 1,
+                    label = group,
+                    colour=txt_col),
+                angle=90,
+                fontface="bold",
+                inherit.aes = FALSE) +
+      scale_colour_manual(values=c("black",NA))+
+      theme_void() +
+      theme(axis.title.y = element_blank(),
+            legend.background = element_blank())+
+      guides(colour="none") +
+      ylab(y_lab_text) +
+      coord_cartesian(ylim = y_lim) + 
+      coord_flip() 
+    
+    plots[[as.character(i)]] <- p_mod_groups + p_mod + p_mod_p + plot_layout(widths = c(.1,1,.2))
+    
+     
+  }
+  return(plots)
+}
+
+
 plot_OR_UKB_CT <- function(file,p_val=TRUE){
   
   shift_vars <- rev(c(
