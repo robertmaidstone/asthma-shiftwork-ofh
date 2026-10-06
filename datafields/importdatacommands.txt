@@ -1,4 +1,5 @@
 dx download "dataprocessing_functions.r"
+dx download "functions.r"
 dx download "data_processing.ipynb"
 
 dx download "data/participant.csv"
