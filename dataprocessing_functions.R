@@ -428,9 +428,10 @@ derive_job_vars <- function(data) {
   data <- data %>%
     mutate(
       Income = housing_income_1_1,
-      Income_cat=factor(Income,levels=c('Less than £18,000','£18,000 to £30,999','£31,000 to £51,999','£52,000 to £100,000','Greater than £100,000'),ordered=T),
+      Income_cat=factor(Income,levels=c(-3,-1,1,2,3,4,5),
+                        labels=c('Prefer not to answer','Do not know', 'Less than £18,000','£18,000 to £30,999','£31,000 to £51,999','£52,000 to £100,000','Greater than £100,000'),ordered=T),
       LengthWW = as.numeric(gsub("[^0-9]", "", work_wk_hrs_1_1)),
-      Work_Manual_Labour = factor_nsua_cond(work_manual_labour_1_1),
+      #Work_Manual_Labour = factor_nsua_cond(work_manual_labour_1_1),
       Years_in_Current_Job = ifelse(
         work_yrs_1_1 == "Less than a year",
         0,
@@ -446,9 +447,9 @@ derive_job_vars <- function(data) {
 derive_sleep_vars <- function(data) {
   data <- data %>%
     mutate(
-      Chronotype=case_when(sleep_chronotype_1_1 %in% c("More a 'morning' than 'evening' person","More an 'evening' than a 'morning' person") ~ "Intermediate",
-                           sleep_chronotype_1_1=="Definitely a 'morning' person" ~ "Morning",
-                           sleep_chronotype_1_1=="Definitely an 'evening' person" ~ "Evening"),
+      Chronotype=case_when(sleep_chronotype_1_1 %in% c(2,3) ~ "Intermediate",
+                           sleep_chronotype_1_1==1 ~ "Morning",
+                           sleep_chronotype_1_1==4 ~ "Evening"),
       sleep_dur=as.numeric(gsub("[^0-9]", "", sleep_hrs_1_1))
     )
   data
@@ -491,11 +492,11 @@ calc_units <- function(data, prefix, unit_value) {
 derive_alcohol_vars <- function(data) {
   data <- data %>%
     mutate(Alcohol_status = case_when(
-      (alcohol_curr_1_1=="Never") & (alcohol_prev_1_1=="No") ~ "Never drinker",
-      (alcohol_curr_1_1=="Never") & (alcohol_prev_1_1=="Yes") ~ "Previous drinker",
-      (alcohol_curr_1_1%in%c('Special occasions only','One to three times a month')) ~ "Less than 4 times a month",
-      (alcohol_curr_1_1%in%c('Once or twice a week','Three or four times a week')) ~ "1-4 times a week",
-      (alcohol_curr_1_1=="Daily or almost daily") ~ "Daily or almost daily"
+      (alcohol_curr_1_1==6) & (alcohol_prev_1_1==0) ~ "Never drinker",
+      (alcohol_curr_1_1==6) & (alcohol_prev_1_1==1) ~ "Previous drinker",
+      (alcohol_curr_1_1%in%c(5,4)) ~ "Less than 4 times a month",
+      (alcohol_curr_1_1%in%c(3,2)) ~ "1-4 times a week",
+      (alcohol_curr_1_1==1) ~ "Daily or almost daily"
     ),
     Alcohol_status=factor(Alcohol_status,levels=c('Never drinker','Previous drinker','Less than 4 times a month','1-4 times a week','Daily or almost daily'),ordered=T),
     
