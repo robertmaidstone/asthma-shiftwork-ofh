@@ -518,11 +518,11 @@ derive_alcohol_vars <- function(data) {
 derive_exercise_vars <- function(data) {
   data <- data %>% 
     mutate(Days_walk = ifelse(
-      activity_walk_days_2_1 == "Unable to walk",
+      activity_walk_days_2_1 == -2,
       0,
-      as.numeric(gsub("[^0-9]", "", activity_walk_days_2_1))),
-      Days_mod = as.numeric(gsub("[^0-9]", "", activity_mod_days_2_1)),
-      Days_vig = as.numeric(gsub("[^0-9]", "", activity_vig_days_2_1))
+      ifelse(activity_walk_days_2_1 %in% c(-3,-1), NA_real_, as.numeric(gsub("[^0-9]", "", activity_walk_days_2_1)))),
+      Days_mod = ifelse(activity_walk_days_2_1 %in% c(-3,-1), NA_real_,as.numeric(gsub("[^0-9]", "", activity_mod_days_2_1))),
+      Days_vig = ifelse(activity_walk_days_2_1 %in% c(-3,-1), NA_real_,as.numeric(gsub("[^0-9]", "", activity_vig_days_2_1)))
     )
   data
 }
@@ -533,18 +533,22 @@ derive_exercise_vars <- function(data) {
 derive_core_demographic_vars <- function(data) {
   data <- data %>%
     mutate(
-      Sex = demog_sex_2_1,
-      Submission_year = (submission_date |> strsplit("-") |> unlist())[(1:length(submission_date))*3-2],
-      Age = as.numeric(Submission_year)-as.numeric(gsub("[^0-9]", "", birth_year)), #change to be based on months/days as well as year??
+      Sex = case_when(
+        demog_sex_2_1==1 ~ "Male",
+        demog_sex_2_1==2 ~ "Female",
+        demog_sex_2_1==3 ~ "Intersex",
+        demog_sex_2_1==-3 ~ "Prefer not to answer"
+        ),
+      Submission_year = lubridate::year(as.Date(submission_date)),
+      Age = ifelse(birth_year==-999,NA,as.numeric(Submission_year)-as.numeric(gsub("[^0-9]", "", birth_year))), #change to be based on months/days as well as year??
       Ethnicity = demog_ethnicity_1_1,
       ethnicity_group = case_when(
-        str_detect(demog_ethnicity_1_1, "White.*British") ~ "White British",
-        str_detect(demog_ethnicity_1_1, "White.*Irish|Any other white|Polish|Gypsy|Traveller") ~ "White Other",
-        str_detect(demog_ethnicity_1_1, "^Mixed|Any other mixed") ~ "Mixed",
-        str_detect(demog_ethnicity_1_1, "Indian|Pakistani|Bangladeshi|Asian") ~ "Asian",
-        str_detect(demog_ethnicity_1_1, "Black|African|Caribbean") ~ "Black",
-        str_detect(demog_ethnicity_1_1, "Chinese") ~ "Chinese",
-        TRUE ~ "Other"
+        demog_ethnicity_1_1==1 ~ "White British",
+        demog_ethnicity_1_1 %in% c(2,3,4,5) ~ "White Other",
+        demog_ethnicity_1_1 %in% c(6,7,8,9)~ "Mixed",
+        demog_ethnicity_1_1 %in% c(10,11,12,14) ~ "Asian or Asian British",
+        demog_ethnicity_1_1 %in% c(15,16,17) ~ "Black or Black British",
+        demog_ethnicity_1_1 %in% c(13,18,19) ~ "Other"
       )
     )
   data

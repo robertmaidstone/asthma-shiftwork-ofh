@@ -22,7 +22,7 @@ plot_OR <- function(file,p_val=TRUE,y_lim=NULL,p_val_loc=NULL,y_lab_text=NULL){
                  values_to="values") %>%
     separate(values,
              into=c("OR","LCI","UCI"),
-             sep="[()\\– ]+",
+             sep="[()\\–\\- ]+",
              convert=TRUE,
              extra="drop",
              fill="right") %>%

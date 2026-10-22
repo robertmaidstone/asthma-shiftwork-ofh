@@ -14,7 +14,7 @@ data_m<-load_and_merge("part_data.csv",
                        "clinic_data.csv",
                        id="pid")
 
-endoffollowup <- as.Date("2025-07-31")
+endoffollowup <- as.Date("2025-10-31")
 
 data <- data_m %>%
   derive_core_demographic_vars() %>%
