@@ -15,14 +15,16 @@ LRdata %>% separate(analysis,sep = "_",into=c("analysis","SW","model")) %>%filte
   mutate(model=str_replace(model,pattern = "m",replacement = "")) %>%
   pivot_wider(names_from = term,values_from = formatted) %>%
   mutate(vars="formatted") %>%
-  mutate(sex_interaction=0.04) %>% 
+  mutate(sex_interaction=0.000001) %>% #these are all less than 0.0001
   dplyr::select(Sex,vars,`No shift work`=`(Intercept)`,`Shift work`=`Shift_work_bShift work`,sex_interaction,model) %>%
   write_xlsx("~/OurFutureHealth/OFHresults/ERJresub/SWb_csvout.xlsx")
 
 
 tt <- plot_OR("~/OurFutureHealth/OFHresults/ERJresub/SWb_csvout.xlsx",y_lim = c(0.6,1.5))
 tt
-#ggsave(plot = tt[[2]], filename="OurFutureHealth/ofh-shiftwork/plots_m2/CS_SWb_income_LT18.png",width=3.75,height=2)
+ggsave(plot = tt[[1]], filename="OurFutureHealth/ofh-shiftwork/plots_m2/SWb_selfreport_m1.png",width=3.75,height=2)
+ggsave(plot = tt[[2]], filename="OurFutureHealth/ofh-shiftwork/plots_m2/SWb_selfreport_m2.png",width=3.75,height=2)
+ggsave(plot = tt[[3]], filename="OurFutureHealth/ofh-shiftwork/plots_m2/SWb_selfreport_m3.png",width=3.75,height=2)
 
 LRdata %>% separate(analysis,sep = "_",into=c("analysis","SW","model")) %>%filter(SW=="SW") %>%
   dplyr::select(Sex=Group,term,formatted,model) %>%
@@ -31,7 +33,7 @@ LRdata %>% separate(analysis,sep = "_",into=c("analysis","SW","model")) %>%filte
   mutate(model=str_replace(model,pattern = "m",replacement = "")) %>%
   pivot_wider(names_from = term,values_from = formatted) %>%
   mutate(vars="formatted") %>%
-  mutate(sex_interaction=0.04) %>% 
+  mutate(sex_interaction=0.000001) %>% #these are all less than 0.0001
   dplyr::select(Sex,vars,`No shift work`=`(Intercept)`,
                 `Never/rarely`=`Shift_workNever/rarely`,
                 `Sometimes`=`Shift_workSometimes`,
@@ -42,5 +44,7 @@ LRdata %>% separate(analysis,sep = "_",into=c("analysis","SW","model")) %>%filte
 
 tt <- plot_OR("~/OurFutureHealth/OFHresults/ERJresub/SW_csvout.xlsx",y_lim = c(0.6,1.5))
 tt
-
+ggsave(plot = tt[[1]], filename="OurFutureHealth/ofh-shiftwork/plots_m2/SW_selfreport_m1.png",width=3.75,height=2)
+ggsave(plot = tt[[2]], filename="OurFutureHealth/ofh-shiftwork/plots_m2/SW_selfreport_m2.png",width=3.75,height=2)
+ggsave(plot = tt[[3]], filename="OurFutureHealth/ofh-shiftwork/plots_m2/SW_selfreport_m3.png",width=3.75,height=2)
 

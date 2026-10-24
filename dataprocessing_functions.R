@@ -80,16 +80,16 @@ factor_nsua_cond <- function(x){
 derive_asthma_vars <- function(data) {
   
   asthma_patterns <- c(
-    Ast_Reliever        = "Asthma reliever inhaler",
-    Ast_Preventer       = "Asthma preventer inhaler",
-    Ast_Combination     = "Asthma combination inhaler",
-    Ast_Anticholinergic = "Anticholinergic inhaler",
-    Ast_Leukotriene     = "Leukotriene receptor antagonist",
-    Ast_Bronchodilator  = "Tablet bronchodilator",
-    Ast_Corticosteroids = "Corticosteroids",
-    Ast_Other           = "Other not listed",
-    Ast_Unknown         = "Do not know|Prefer not to answer",
-    Ast_None            = "None of the above"
+    Ast_Reliever        = 1,
+    Ast_Preventer       = 2,
+    Ast_Combination     = 3,
+    Ast_Anticholinergic = 4,
+    Ast_Leukotriene     = 5,
+    Ast_Bronchodilator  = 6,
+    Ast_Corticosteroids = 7,
+    Ast_Other           = 8,
+    Ast_Unknown         %in% c(-1,-3),
+    Ast_None            = -7
   )
   
   for (nm in names(asthma_patterns)) {
@@ -98,8 +98,8 @@ derive_asthma_vars <- function(data) {
   
   data <- data %>%
     mutate(
-      Lung_med      = str_detect(medicat_1_m, "Lung or breathing problems"),
-      Asthma        = str_detect(diag_resp_1_m, "Asthma"),
+      Lung_med      = medicat_1_m==8 ,
+      Asthma        = diag_resp_1_m ==4,
       Asthma2       = Asthma & Lung_med,
       Asthma_med    = Asthma & (Ast_Preventer | Ast_Combination),
       Asthma_med2   = if_else(Asthma & !(Ast_Preventer | Ast_Combination),
@@ -194,38 +194,36 @@ derive_smoking_vars <- function(data) {
   mutate(
     smoking_status = case_when(
       is.na(smoke_tobacco_type_1_m) |
-        str_detect(smoke_tobacco_type_1_m, "Prefer not to answer") ~ NA_character_,
+        smoke_tobacco_type_1_m==-3 ~ NA_character_,
       
-      str_detect(smoke_tobacco_type_1_m,
-                 "I have not used any of these tobacco") ~ "Never smoker",
+      smoke_tobacco_type_1_m==6 ~ "Never smoker",
       
       is.na(smoke_reg_1_m) |
-        str_detect(smoke_reg_1_m, "Prefer not to answer") ~ NA_character_,
+        smoke_reg_1_m==-3 ~ NA_character_,
       
-      str_detect(smoke_reg_1_m,
-                 "I have not used any of these tobacco") ~ "Not regular",
+      smoke_reg_1_m==6 ~ "Not regular",
       
-      !str_detect(smoke_reg_1_m, "Cigarettes") ~ "Regular, but not cigarettes",
+      smoke_reg_1_m!=0 ~ "Regular, but not cigarettes",
       
-      smoke_status_2_1 == "Yes, every day" ~ "Current regular smoker",
+      smoke_status_2_1 == 1 ~ "Current regular smoker",
       
-      smoke_status_2_1 == "Yes, some days" &
-        smoke_prev_reg_2_1 == "Yes" ~ "Current occasional, previous regular",
+      smoke_status_2_1 == 2 &
+        smoke_prev_reg_2_1 == 1 ~ "Current occasional, previous regular",
       
-      smoke_status_2_1 == "Yes, but rarely" &
-        smoke_prev_reg_2_1 == "Yes" ~ "Current occasional, previous regular",
+      smoke_status_2_1 == 3 &
+        smoke_prev_reg_2_1 == 1 ~ "Current occasional, previous regular",
       
-      smoke_status_2_1 == "No, not at all" &
-        smoke_prev_reg_2_1 == "Yes" ~ "Not current, previous regular",
+      smoke_status_2_1 == 0 &
+        smoke_prev_reg_2_1 == 1 ~ "Not current, previous regular",
       
-      smoke_status_2_1 == "Yes, some days" &
-        smoke_prev_reg_2_1 == "No" ~ "Occasional smoker",
+      smoke_status_2_1 == 2 &
+        smoke_prev_reg_2_1 == 0 ~ "Occasional smoker",
       
-      smoke_status_2_1 == "Yes, but rarely" &
-        smoke_prev_reg_2_1 == "No" ~ "Occasional smoker",
+      smoke_status_2_1 == 3 &
+        smoke_prev_reg_2_1 == 0 ~ "Occasional smoker",
       
-      smoke_status_2_1 == "No, not at all" &
-        smoke_prev_reg_2_1 == "No" ~ "Occasional smoker"
+      smoke_status_2_1 == 0 &
+        smoke_prev_reg_2_1 == 0 ~ "Occasional smoker"
     ),
     
     smoking_status = factor(
@@ -321,21 +319,21 @@ derive_smoking_vars <- function(data) {
     smoke_expo_year_hrs = smoke_expo_hrs*smoke_expo
   ) %>%
     ############# vapes #################################
-  mutate(regular_vapers =  str_detect(smoke_reg_1_m, "Electronic delivery devices"),
+  mutate(regular_vapers =  str_detect(smoke_reg_1_m, "1"),
          age_start_vape_raw = ifelse(regular_vapers,smoke_vape_avg_2_1,NA_real_),
          amount_vaped = case_when(
-           is.na(smoke_vape_avg_2_1)|(smoke_vape_avg_2_1%in%c("","Prefer not to answer")) ~ NA_real_,
-           smoke_vape_avg_2_1 == "Never" ~ 0,
-           smoke_vape_avg_2_1 == "More than 45 times/day" ~ 45,
-           smoke_vape_avg_2_1 == "35-44 times/day" ~ 39.5,
-           smoke_vape_avg_2_1 == "25-34 times/day" ~ 29.5,
-           smoke_vape_avg_2_1 == "15-24 times/day" ~ 19.5,
-           smoke_vape_avg_2_1 == "5-14 times/day" ~ 9.5,
-           smoke_vape_avg_2_1 == "1-4 times/day" ~ 2.5,
-           smoke_vape_avg_2_1 == "3-6 times/week" ~ 4.5/7,
-           smoke_vape_avg_2_1 == "1-2 times/week" ~ .5/7,
-           smoke_vape_avg_2_1 == "2-3 times/mo" ~ 2.5/30.44,
-           smoke_vape_avg_2_1 == "Less than 1 time/mo" ~ .5/30.44
+           is.na(smoke_vape_avg_2_1)|(smoke_vape_avg_2_1%in%c(NA,-3)) ~ NA_real_,
+           smoke_vape_avg_2_1 == 1 ~ 0,
+           smoke_vape_avg_2_1 == 11 ~ 45,
+           smoke_vape_avg_2_1 == 10 ~ 39.5,
+           smoke_vape_avg_2_1 == 9 ~ 29.5,
+           smoke_vape_avg_2_1 == 8 ~ 19.5,
+           smoke_vape_avg_2_1 == 7 ~ 9.5,
+           smoke_vape_avg_2_1 == 6 ~ 2.5,
+           smoke_vape_avg_2_1 == 5 ~ 4.5/7,
+           smoke_vape_avg_2_1 == 4 ~ .5/7,
+           smoke_vape_avg_2_1 == 3 ~ 2.5/30.44,
+           smoke_vape_avg_2_1 == 2 ~ .5/30.44
          )
          
   ) %>%
@@ -348,13 +346,13 @@ derive_smoking_vars <- function(data) {
     )
   
   vape_patterns <- c(
-    Vape_Fruit_NoNic = "Fruit/dessert flavor WITHOUT nicotine",
-    Vape_Fruit_Nic = "Fruit/dessert flavor WITH nicotine",
-    Vape_Menth_NoNic = "Menthol flavor WITHOUT nicotine",
-    Vape_Menth_Nic = "Menthol flavor WITH nicotine",
-    Vape_Tobac_NoNic = "Tobacco flavor WITHOUT nicotine",
-    Vape_Tobac_Nic = "Tobacco flavor WITH nicotine",
-    Vape_Other = "Marijuana|Alcohol|Other"
+    Vape_Fruit_NoNic = 1,
+    Vape_Fruit_Nic = 2,
+    Vape_Menth_NoNic = 3,
+    Vape_Menth_Nic = 4,
+    Vape_Tobac_NoNic = 5,
+    Vape_Tobac_Nic = 6,
+    Vape_Other = "7|8|9"
   )
   
   for (nm in names(vape_patterns)) {
@@ -375,6 +373,16 @@ derive_shiftwork_vars <- function(data) {
         work_nights_1_1 != "" ~ work_nights_1_1,
         TRUE ~ NA
       ),
+      Shift_work = case_when(
+        work_shifts_1_1 == 1 ~ "No shift work",
+        work_nights_1_1 ==3 ~ "Sometimes",
+        work_nights_1_1 == 2 ~ "Sometimes",
+        work_nights_1_1 == 1 ~ "Never/rarely",
+        work_nights_1_1 == 4 ~ "Always",
+        work_nights_1_1 == -1 ~ "Do not know",
+        work_nights_1_1 == -3 ~ "Prefer not to answer"
+      ),
+        
       Shift_work = factor(
         Shift_work,
         levels = c("No shift work","Never/rarely","Sometimes","Always","Do not know","Prefer not to answer")
