@@ -107,7 +107,7 @@ plot_OR_together <- function(files,labels,groups,p_val=TRUE,y_lim=NULL,p_val_loc
   
   for(i in 1:length(files)){
     readxl::read_xlsx(files[[i]]) -> plot_data
-    plot_data %>% filter(model==2,vars=="formatted") %>% 
+    plot_data %>% filter(vars=="formatted") %>% 
       mutate(label=labels[i],
              group=groups[i]) %>%
       rbind(plot_data_m) -> plot_data_m
@@ -163,7 +163,7 @@ plot_OR_together <- function(files,labels,groups,p_val=TRUE,y_lim=NULL,p_val_loc
       geom_point(position = position_dodge(width = pd_width)) + 
       theme_classic() +
       theme(axis.title.y = element_blank(),
-            legend.position=c(0.08, 0.925),
+            legend.position=c(0.9, 0.925),
             legend.background = element_blank())+
       ylab(y_lab_text) +
       #ylim(y_lim) +

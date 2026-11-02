@@ -37,10 +37,13 @@ plot_OR_together(
            "£52,000 - £100,000",
            "> £100,000"),
   groups=c(rep("Age",4),rep("Ethnicity",6),rep("Income",5)),
-  y_lim = c(0.2,2.5)
-)
+  y_lim = c(0.2,2.5),
+  model=2
+) -> p_together
 
 
+p_together
+ggsave(plot = p_together, filename="OurFutureHealth/ofh-shiftwork/plots/Fig3together.png",width=5,height=4)
 
 ###
 tt <- plot_OR("~/OurFutureHealth/OFHresults/CS_SW_income_LT18.xlsx")
