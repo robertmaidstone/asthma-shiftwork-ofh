@@ -20,7 +20,7 @@ LRdata %>% separate(analysis,sep = "_",into=c("analysis","SW","model")) %>%filte
   write_xlsx("~/OurFutureHealth/OFHresults/ERJresub/SWb_csvout.xlsx")
 
 
-tt <- plot_OR("~/OurFutureHealth/OFHresults/ERJresub/SWb_csvout.xlsx",y_lim = c(0.6,1.5))
+tt <- plot_OR("~/OurFutureHealth/OFHresults/ERJresub/SWb_csvout.xlsx",y_lim = c(0.8,1.2))
 tt
 ggsave(plot = tt[[1]], filename="OurFutureHealth/ofh-shiftwork/plots_m2/SWb_selfreport_m1.png",width=3.75,height=2)
 ggsave(plot = tt[[2]], filename="OurFutureHealth/ofh-shiftwork/plots_m2/SWb_selfreport_m2.png",width=3.75,height=2)
@@ -44,7 +44,7 @@ LRdata %>% separate(analysis,sep = "_",into=c("analysis","SW","model")) %>%filte
 
 tt <- plot_OR("~/OurFutureHealth/OFHresults/ERJresub/SW_csvout.xlsx",y_lim = c(0.6,1.5))
 tt
-ggsave(plot = tt[[1]], filename="OurFutureHealth/ofh-shiftwork/plots_m2/SW_selfreport_m1.png",width=3.75,height=2)
-ggsave(plot = tt[[2]], filename="OurFutureHealth/ofh-shiftwork/plots_m2/SW_selfreport_m2.png",width=3.75,height=2)
-ggsave(plot = tt[[3]], filename="OurFutureHealth/ofh-shiftwork/plots_m2/SW_selfreport_m3.png",width=3.75,height=2)
+ggsave(plot = tt[[1]], filename="OurFutureHealth/ofh-shiftwork/plots_m2/SW_selfreport_m1.png",width=5,height=4)
+ggsave(plot = tt[[2]], filename="OurFutureHealth/ofh-shiftwork/plots_m2/SW_selfreport_m2.png",width=5,height=4)
+ggsave(plot = tt[[3]], filename="OurFutureHealth/ofh-shiftwork/plots_m2/SW_selfreport_m3.png",width=5,height=4)
 

@@ -127,19 +127,23 @@ plot_OR_together <- function(files,labels,groups,p_val=TRUE,y_lim=NULL,p_val_loc
     mutate(OR=ifelse(`Shift work`=="No shift work",1,OR)) %>%
     mutate(`Shift work`=factor(recode(`Shift work`,!!!shift_vars),levels=unname(shift_vars),ordered=TRUE)) %>%
     filter(`Shift work`=="Shift workers")%>%
-    mutate(OR=as.numeric(OR))
+    mutate(OR=as.numeric(OR),
+           LCI=as.numeric(LCI),
+           UCI=as.numeric(UCI))
   
   group_bounds <- plot_data_m %>%
     distinct(label, group) %>%
     arrange(label) %>%
     group_by(group) %>%
     summarise(
-      x_pos = which(levels(clean_data$label) %in% label)[1] - 0.5
-    )
+      x_pos = which(levels(clean_data$label) %in% label)[1] - 0.5,
+      freq = n()
+    ) %>% 
+    mutate(x_pos_labs=x_pos+freq/2) %>%
+    dplyr::select(-freq)
   
-  group_labs <- rbind(data.frame(group="top",x_pos=NA),group_bounds,data.frame(group="bottom",x_pos=NA)) %>% 
-    mutate(x_pos_labs=c(15,13.5,8,3,1),
-           txt_col=ifelse(is.na(x_pos),"blank","black"))
+  group_labs <- rbind(data.frame(group="top",x_pos=NA,x_pos_labs=sum(table(groups))),group_bounds,data.frame(group="bottom",x_pos=NA,x_pos_labs=1)) %>% 
+    mutate(txt_col=ifelse(is.na(x_pos),"blank","black"))
 
   if(is.null(y_lim)){
     y_lim <- c(0.975*min(clean_data$LCI,na.rm=T),max(clean_data$UCI,na.rm=T)*1.025)
@@ -166,7 +170,6 @@ plot_OR_together <- function(files,labels,groups,p_val=TRUE,y_lim=NULL,p_val_loc
             legend.position=c(0.9, 0.925),
             legend.background = element_blank())+
       ylab(y_lab_text) +
-      #ylim(y_lim) +
       coord_cartesian(ylim = y_lim, clip = "off") + 
       coord_flip(clip="off") +
       scale_colour_manual(
@@ -184,24 +187,6 @@ plot_OR_together <- function(files,labels,groups,p_val=TRUE,y_lim=NULL,p_val_loc
         linewidth = 0.5,
         inherit.aes = FALSE
       )
-    
-    # if (p_val) {
-    #   pval <- plot_data_m %>%
-    #     filter(model == i, !is.na(sex_interaction)) %>%
-    #     group_by(label) %>%
-    #     dplyr::select(label,sex_interaction) %>%
-    #     unique()
-    #   
-    #   pval<-pval %>% mutate(pval_text = ifelse(sex_interaction < 0.01, "p<0.01", paste0("p=", formatC(sex_interaction,format="f",digits=2)))) %>%
-    #     mutate(y_pos=y_lim[2]+.2)
-    # 
-    #   p_mod <- p_mod +
-    #     geom_text(data=pval,
-    #              aes(x = label,
-    #              y = y_pos,
-    #              label = pval_text),
-    #              inherit.aes = FALSE)
-      
     
     plots[[as.character(i)]] <- p_mod
    
